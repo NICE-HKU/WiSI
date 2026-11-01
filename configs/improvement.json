@@ -1,0 +1,15 @@
+{
+  "description": "Main self-improvement study: eight paired lineages in each of six evaluation environments (E_L = E_S).",
+  "model": "gpt-6.1-terra",
+  "prices": {"input_per_1M": 1.00, "cached_input_per_1M": 0.05, "output_per_1M": 5.00},
+  "hard_cost_cap_usd": 40.0,
+  "seed_agent": "m1_full_frame",
+  "config": "configs/multi_item.yaml",
+  "training_environments": [["A", "R2"], ["D", "R2"], ["D", "R5"], ["D", "R4"], ["C", "R4"], ["Mix", "R4"]],
+  "mixture": [["A", "R2"], ["C", "R4"]],
+  "lineages_per_environment": 8,
+  "generations": 4,
+  "children_per_generation": 2,
+  "repair_attempts_per_proposal": 1,
+  "batch_size": 40
+}

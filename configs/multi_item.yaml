@@ -1,0 +1,85 @@
+version: simulation-3-multi-item-tasks-load-sweep
+status: controlled-simulation-assumptions-unvalidated
+deadline_s: 60
+deadline_per_item_s: 60
+channel_common:
+  carrier_hz: 5.2e9
+  bandwidth_hz: 20.0e6
+  noise_figure_db: 7.0
+  ptx_dbm: 15.0
+  pap_dbm: 20.0
+  pl_exponent: 3.0
+  wall_loss_int_db: 5.0
+  wall_loss_ext_db: 12.0
+  door_closed_db: 4.0
+  window_db: 3.0
+  shadow_std_db: 4.0
+  shadow_decorr_m: 2.0
+  eta: 0.6
+  r_max_bps: 100.0e6
+  fading: rayleigh
+  fading_block_s: 0.05
+  rssi_noise_db: 2.0
+regimes:
+  R1:
+    rho: 1.0
+    ap_placement: central
+    camera_res: high
+  R2:
+    rho: 0.06
+    ap_placement: edge
+    camera_res: high
+  R3:
+    rho: 0.06
+    ap_placement: edge
+    camera_res: high
+    ge_mean_good_s: 20.0
+    ge_mean_bad_s: 2.5
+  R4:
+    rho: 0.01
+    ap_placement: edge
+    camera_res: high
+  R5:
+    rho: 0.03
+    ap_placement: edge
+    camera_res: high
+perception:
+  local:
+    model_id: mock-local-small@simulation-1
+    acc_max: 0.93
+    px50: 55.0
+    px_scale: 12.0
+    input_res: low
+    confidence_mode: probability
+  edge:
+    model_id: mock-edge-vlm@simulation-1
+    acc_max: 0.97
+    px50: 22.0
+    px_scale: 6.0
+    confidence_mode: probability
+  local_latency:
+    name: local
+    median_s: 0.18
+    sigma: 0.2
+    provenance: assumed analytic distribution; not measured
+  edge_latency:
+    name: edge
+    median_s: 0.35
+    sigma: 0.2
+    per_1k_image_tokens_s: 0.12
+    provenance: assumed analytic distribution; not measured
+  payload:
+    bpp:
+    - - 75
+      - 1.35
+    - - 90
+      - 2.3
+    frame_sigma: 0.15
+  observation_assumptions:
+    crop_context_keep: 0.75
+    crop_target_keep: 0.85
+    detection_keep: 0.8
+evidence_scope: Analytic perception and payload models on ProcTHOR-derived 2D geometry;
+  no rendered images or model inference.
+assumption_variant: combined
+task_suite_note: multi-item tasks (inspect = 3 state items in 3 rooms, tally = cross-room count over up to 3 rooms); deadline = deadline_per_item_s x items, fixed before any multi-item outcome was seen.

@@ -1,0 +1,1132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WiSI: Wireless-in-the-Loop Self-Improvement</title>
+<meta name="description" content="When embodied agents rewrite their own programs, the wireless link shapes both the feedback they learn from and the tests that decide which rewrites survive. WiSI puts the network inside the improvement loop.">
+<meta property="og:title" content="WiSI: Wireless-in-the-Loop Self-Improvement">
+<meta property="og:description" content="Agents improved via a network-blind loop reach 40.0% task success under congestion; improved via WiSI, 77.2%.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1b2d'/%3E%3Cpath d='M9 21a10 10 0 0 1 14 0M12 17.5a6 6 0 0 1 8 0' stroke='%2367c6f5' stroke-width='2.4' fill='none' stroke-linecap='round'/%3E%3Ccircle cx='16' cy='23.5' r='2.2' fill='%2367c6f5'/%3E%3C/svg%3E">
+<style>
+:root{
+  color-scheme: light;
+  --page:#f7f7f4; --surface:#fcfcfb; --surface-2:#f1f0ec; --ink:#0b0b0b; --ink-2:#52514e; --muted:#7c7a74;
+  --grid:#e4e3dc; --axis:#c3c2b7; --ring:rgba(11,11,11,.10); --shadow:0 1px 2px rgba(0,0,0,.04),0 8px 24px rgba(0,0,0,.05);
+  --ideal:#e34948; --radio:#2a78d6; --radio-1:#86b6ef; --radio-2:#3987e5; --radio-3:#184f95;
+  --uniform:#eb6834; --mixed:#6250d6; --base:#a3a19a; --base-2:#77756f;
+  --good:#0ca30c; --bad:#d03b3b; --accent:#2a78d6; --code:#f1f0ec;
+  --hero-1:#0b1626; --hero-2:#13243c;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#8f8d86;
+    --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.10); --shadow:0 1px 2px rgba(0,0,0,.4);
+    --ideal:#e66767; --radio:#3987e5; --radio-1:#2a5a94; --radio-2:#3987e5; --radio-3:#9ec5f4;
+    --uniform:#d95926; --mixed:#9085e9; --base:#6f6d67; --base-2:#9b9991; --accent:#5598e7; --code:#141413;
+    --hero-1:#070d17; --hero-2:#0e1a2c;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --page:#0d0d0d; --surface:#1a1a19; --surface-2:#232321; --ink:#f0efec; --ink-2:#c3c2b7; --muted:#8f8d86;
+  --grid:#2c2c2a; --axis:#45443f; --ring:rgba(255,255,255,.10); --shadow:0 1px 2px rgba(0,0,0,.4);
+  --ideal:#e66767; --radio:#3987e5; --radio-1:#2a5a94; --radio-2:#3987e5; --radio-3:#9ec5f4;
+  --uniform:#d95926; --mixed:#9085e9; --base:#6f6d67; --base-2:#9b9991; --accent:#5598e7; --code:#141413;
+  --hero-1:#070d17; --hero-2:#0e1a2c;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+@media (max-width:600px){.wrap{padding:0 16px}}
+
+/* nav */
+nav.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--page) 82%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--ring)}
+nav.top .wrap{display:flex;align-items:center;gap:20px;height:52px}
+nav.top .brand{font-weight:700;letter-spacing:.02em;text-decoration:none;color:var(--ink)}
+nav.top .links{display:flex;gap:18px;margin-left:auto;font-size:14px}
+nav.top .links a{color:var(--ink-2);text-decoration:none}
+nav.top .links a:hover{color:var(--ink)}
+#themeBtn{border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);border-radius:8px;height:30px;width:30px;cursor:pointer;display:grid;place-items:center}
+@media (max-width:720px){nav.top .links{display:none}nav.top .wrap{justify-content:space-between}}
+
+/* hero */
+header.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 600px at 15% 10%,var(--hero-2),var(--hero-1));color:#eef3fa}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.9}
+.hero .wrap{position:relative;padding-top:92px;padding-bottom:96px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:#9fc3ea}
+.eyebrow i{width:6px;height:6px;border-radius:50%;background:#67c6f5;box-shadow:0 0 0 4px rgba(103,198,245,.18)}
+.hero h1{font-size:clamp(44px,7vw,84px);line-height:1;margin:18px 0 6px;letter-spacing:-.02em}
+.hero h1 span{display:block;font-size:clamp(22px,3vw,34px);font-weight:500;letter-spacing:-.01em;color:#cfe0f4;margin-top:12px}
+.hero p.lead{max-width:720px;font-size:clamp(17px,2vw,20px);color:#c6d3e3;margin:22px 0 22px}
+.authors{font-size:16px;color:#e6edf6}
+.authors small{display:block;color:#93a7c0;font-size:14px;margin-top:2px}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;font-weight:600;font-size:15px;text-decoration:none;border:1px solid rgba(255,255,255,.18);color:#eef3fa;background:rgba(255,255,255,.06)}
+.btn:hover{background:rgba(255,255,255,.12)}
+.btn.primary{background:#e9f2fc;color:#0b1626;border-color:transparent}
+.btn.primary:hover{background:#fff}
+.btn[aria-disabled="true"]{opacity:.55;pointer-events:none}
+
+/* sections */
+section{padding:84px 0 24px}
+.kicker{font-size:13px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+h2{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.015em;margin:8px 0 14px}
+h3{font-size:21px;line-height:1.3;margin:0 0 6px;letter-spacing:-.005em}
+.sub{color:var(--ink-2);max-width:760px;font-size:17px;margin:0}
+.card{background:var(--surface);border:1px solid var(--ring);border-radius:16px;box-shadow:var(--shadow)}
+.fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:32px}
+@media (max-width:900px){.fgrid{grid-template-columns:1fr}}
+.fcard{padding:20px 20px 16px;display:flex;flex-direction:column;gap:10px}
+.fcard h3{font-size:17.5px;margin:0}
+.fcard p.k{margin:0;color:var(--ink-2);font-size:14.5px;line-height:1.5}
+.fcard p.k b{color:var(--ink)}
+.fcard .legend{font-size:12.5px;gap:12px}
+.seg.sm{align-self:flex-start}
+.seg.sm button{font-size:12.5px;padding:5px 9px}
+.vrows{display:grid;gap:14px;margin-top:4px}
+.vrow{display:grid;grid-template-columns:112px 1fr;gap:12px;align-items:baseline;font-size:14px;color:var(--ink-2);line-height:1.5;padding-bottom:12px;border-bottom:1px solid var(--grid)}
+.vrow:last-child{border-bottom:0;padding-bottom:0}
+.vrow .v{font-size:26px;font-weight:700;letter-spacing:-.01em;color:var(--radio);line-height:1.1}
+.vrow b{color:var(--ink)}
+.cases{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.cases button{border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);font:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:999px;cursor:pointer}
+.cases button[aria-selected="true"]{background:var(--ink);color:var(--page);border-color:var(--ink)}
+.cases button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.case-head{display:flex;flex-direction:column;gap:4px;margin:2px 4px 14px;font-size:14.5px;color:#b9c7d8;line-height:1.55;max-width:900px}
+.case-head b{color:#eef3fa;font-size:17px}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--ring);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--ink-2);font:inherit;font-size:13px;font-weight:600;padding:6px 11px;border-radius:7px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.callout{border-left:3px solid var(--accent);padding:4px 0 4px 14px;color:var(--ink-2);font-size:15px}
+.callout b{color:var(--ink);font-size:26px;display:block;line-height:1.2;letter-spacing:-.01em}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.legend i.line{height:3px;border-radius:2px;width:16px}
+svg text{font-family:inherit}
+.chart{width:100%;display:block}
+details.tbl{margin-top:10px;font-size:14px;color:var(--ink-2)}
+details.tbl summary{cursor:pointer;color:var(--muted)}
+details.tbl table{border-collapse:collapse;margin-top:8px;font-variant-numeric:tabular-nums;width:100%}
+details.tbl th,details.tbl td{border-bottom:1px solid var(--grid);padding:5px 8px;text-align:right}
+details.tbl th:first-child,details.tbl td:first-child{text-align:left}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--ring);box-shadow:0 6px 20px rgba(0,0,0,.18);border-radius:10px;padding:8px 10px;font-size:13px;line-height:1.45;opacity:0;transition:opacity .12s;max-width:260px}
+#tip b{font-weight:650}
+#tip .m{color:var(--ink-2)}
+
+/* theater */
+.theater{margin-top:14px;background:#0b121d;border-radius:20px;color:#dfe7f1;padding:18px;position:relative;box-shadow:0 20px 50px rgba(5,12,24,.25);border:1px solid #1d2a3c}
+.panes{display:grid;grid-template-columns:1fr 1fr;gap:16px;position:relative}
+@media (max-width:860px){.panes{grid-template-columns:1fr}}
+.pane{background:#0f1826;border:1px solid #1d2a3c;border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.pane-h{display:flex;align-items:center;gap:10px;padding:12px 14px 10px}
+.pane-h .chip{width:12px;height:12px;border-radius:4px;flex:none}
+.pane-h .t{font-weight:650;font-size:15px;color:#eef3fa}
+.pane-h .t small{display:block;font-weight:500;color:#8ca0b8;font-size:12.5px}
+.canvas-wrap{position:relative}
+.canvas-wrap canvas{display:block;width:100%;height:auto}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid #1d2a3c}
+.hud div{padding:9px 12px;border-right:1px solid #1d2a3c}
+.hud div:last-child{border-right:0}
+.hud .l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7d92ab}
+.hud .n{font-size:20px;font-weight:650;font-variant-numeric:tabular-nums;color:#eef3fa}
+.hud .n.bad{color:#ff8a8a}
+.hud .n{white-space:nowrap}
+@media (max-width:600px){
+  .hud{grid-template-columns:repeat(2,1fr)}
+  .hud div:nth-child(2){border-right:0}
+  .hud div:nth-child(-n+2){border-bottom:1px solid #1d2a3c}
+  .theater{padding:10px;border-radius:16px}
+}
+.status{padding:9px 14px;font-size:13.5px;color:#b9c7d8;border-top:1px solid #1d2a3c;min-height:40px;display:flex;align-items:center;gap:8px}
+.status .dot{width:8px;height:8px;border-radius:50%;background:#5f748d;flex:none}
+.endcard{position:absolute;inset:auto 12px 12px 12px;background:rgba(9,15,25,.92);border:1px solid #2a3a50;border-radius:12px;padding:12px 14px;font-size:13.5px;transform:translateY(8px);opacity:0;transition:all .35s;pointer-events:none}
+.endcard.show{opacity:1;transform:none}
+.endcard .r{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #263449}
+.endcard .r:last-of-type{border-bottom:0}
+.endcard .verdict{margin-top:8px;font-weight:700;font-size:15px}
+.ok{color:#5fd38a}.no{color:#ff8a8a}
+.controls{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.pbtn{width:44px;height:44px;border-radius:50%;border:0;background:#e9f2fc;color:#0b1626;cursor:pointer;display:grid;place-items:center;flex:none}
+.pbtn:focus-visible,.ibtn:focus-visible,.speed button:focus-visible{outline:2px solid #67c6f5;outline-offset:2px}
+.ibtn{height:34px;padding:0 12px;border-radius:9px;border:1px solid #2a3a50;background:#122034;color:#cfe0f4;font:inherit;font-size:13px;cursor:pointer}
+.speed{display:inline-flex;border:1px solid #2a3a50;border-radius:9px;overflow:hidden}
+.speed button{border:0;background:#122034;color:#9fb3ca;font:inherit;font-size:13px;padding:7px 10px;cursor:pointer}
+.speed button[aria-pressed="true"]{background:#2a78d6;color:#fff}
+.clock{font-variant-numeric:tabular-nums;font-size:14px;color:#9fb3ca;margin-left:auto}
+.timeline{margin-top:12px;position:relative;cursor:pointer;touch-action:none}
+.timeline svg{display:block;width:100%}
+.start{position:absolute;inset:0;display:grid;place-items:center;background:radial-gradient(closest-side,rgba(11,18,29,.25),rgba(11,18,29,.8));border-radius:14px;z-index:3;cursor:pointer;border:0;color:#eef3fa;font:inherit;width:100%}
+.start .big{width:84px;height:84px;border-radius:50%;background:#e9f2fc;color:#0b1626;display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 0 0 10px rgba(233,242,252,.12),0 0 0 22px rgba(233,242,252,.05)}
+.start .cap{font-size:18px;font-weight:650}
+.start .cap small{display:block;font-weight:500;color:#aebfd4;font-size:14px;margin-top:4px}
+.start[hidden]{display:none}
+.maplegend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;font-size:12.5px;color:#8ca0b8;margin-top:12px}
+.maplegend .grad{width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,#0f1826,#0f3034,#165852,#2e8c7a)}
+.prov{font-size:13px;color:var(--muted);margin-top:12px;max-width:900px}
+#validation{padding-top:56px}
+.vlm-view{padding:2px}
+.vlm-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:860px){.vlm-grid{grid-template-columns:1fr}}
+.vlm-frame{background:#0f1826;border:1px solid #1d2a3c;border-radius:14px;display:grid;place-items:center;aspect-ratio:4/3;overflow:hidden}
+.vlm-frame img{max-width:100%;max-height:100%;width:auto;height:auto;display:block;object-fit:contain}
+.vlm-pl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+@media (max-width:600px){.vlm-pl{grid-template-columns:repeat(2,1fr)}}
+.vlm-pl button{border:1px solid #2a3a50;background:#122034;color:#cfe0f4;border-radius:10px;padding:8px 10px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-align:left}
+.vlm-pl button small{display:block;font-weight:500;color:#8ca0b8;font-size:12px;margin-top:2px}
+.vlm-pl button[aria-pressed="true"]{background:#2a78d6;border-color:#2a78d6;color:#fff}
+.vlm-pl button[aria-pressed="true"] small{color:#dbe9fa}
+.vlm-pl button:focus-visible,.seg.dark button:focus-visible{outline:2px solid #67c6f5;outline-offset:2px}
+.vlm-side{display:grid;gap:12px}
+.seg.dark{background:#122034;border-color:#2a3a50;justify-self:start}
+.seg.dark button{color:#9fb3ca}
+.seg.dark button[aria-pressed="true"]{background:#2a78d6;color:#fff}
+.vlm-q,.vlm-a,.vlm-kb{background:#0f1826;border:1px solid #1d2a3c;border-radius:12px;padding:12px 14px;font-size:14.5px;color:#dfe7f1;line-height:1.5}
+.vlm-q span,.vlm-a span,.vlm-kb>span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#7d92ab;margin-bottom:4px}
+.vlm-a b{font-size:24px;display:block;line-height:1.2}
+.vlm-a.ok b{color:#5fd38a}.vlm-a.no b{color:#ff8a8a}
+.vlm-a small{color:#b9c7d8;font-size:13px}
+.kbrow{display:grid;grid-template-columns:118px 1fr 58px;gap:8px;align-items:center;font-size:12.5px;color:#9fb3ca;padding:3px 0}
+.kbrow i{display:block;height:8px;border-radius:4px;background:#3c5370}
+.kbrow.on{color:#eef3fa;font-weight:600}
+.kbrow.on i{background:#67c6f5}
+.kbrow em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+
+/* code */
+.tok-s{color:#b5532b}.tok-k{color:#7a3fb0}.tok-c{color:var(--muted)}
+:root[data-theme="dark"] .tok-s{color:#f2a07b}:root[data-theme="dark"] .tok-k{color:#c7a6f2}
+@media (prefers-color-scheme: dark){:root:where(:not([data-theme="light"])) .tok-s{color:#f2a07b}:root:where(:not([data-theme="light"])) .tok-k{color:#c7a6f2}}
+
+/* method */
+.loop{padding:22px;margin-top:30px}
+.loop svg{width:100%;height:auto;display:block}
+.feat{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+@media (max-width:860px){.feat{grid-template-columns:1fr}}
+.feat .card{padding:20px}
+.feat .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);margin-bottom:10px}
+.feat p{margin:0;color:var(--ink-2);font-size:15px}
+
+/* validation tiles */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:36px}
+@media (max-width:860px){.tiles{grid-template-columns:1fr}}
+.tile{padding:22px}
+.tile .lab{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.tile .v{font-size:44px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin:8px 0 6px}
+.tile p{margin:0;color:var(--ink-2);font-size:15px}
+.mini{margin-top:14px}
+
+/* takeaways */
+.takes{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:30px;counter-reset:t}
+@media (max-width:760px){.takes{grid-template-columns:1fr}}
+.take{padding:22px 22px 22px 64px;position:relative}
+.take::before{counter-increment:t;content:counter(t);position:absolute;left:20px;top:20px;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--ink);color:var(--page);font-weight:700;font-size:15px}
+.take h3{font-size:18px}
+.take p{margin:0;color:var(--ink-2);font-size:15px}
+
+/* code + cite */
+pre.block{background:var(--code);border:1px solid var(--ring);border-radius:12px;padding:16px 18px;overflow:auto;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,Menlo,monospace;margin:14px 0 0}
+.copy{float:right;border:1px solid var(--ring);background:var(--surface);color:var(--ink-2);border-radius:8px;font:inherit;font-size:12.5px;padding:4px 10px;cursor:pointer;margin:-4px -6px 0 10px}
+footer{padding:60px 0 50px;color:var(--muted);font-size:14px}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav class="top" aria-label="Sections">
+  <div class="wrap">
+    <a class="brand" href="#top">WiSI</a>
+    <div class="links">
+      <a href="#replay">Replay</a><a href="#validation">Validation</a><a href="#idea">Idea</a><a href="#findings">Findings</a><a href="#takeaways">Takeaways</a><a href="#code">Code</a><a href="#cite">Cite</a>
+    </div>
+    <button id="themeBtn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <canvas id="heroCanvas" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <div class="eyebrow"><i></i>Embodied agents · Wireless networks · LLM self-improvement</div>
+    <h1>WiSI<span>Wireless-in-the-Loop Self-Improvement</span></h1>
+    <p class="lead">Embodied agents can now rewrite their own programs from execution feedback. But the wireless link decides what that feedback shows and which rewrites pass the test. WiSI puts the network inside the improvement loop, and the agents that come out learn to communicate differently.</p>
+    <div class="authors">Zongxi Liu &nbsp;·&nbsp; Hongyang Du<sup>*</sup><small>Department of Electrical and Computer Engineering, The University of Hong Kong</small></div>
+    <div class="btns">
+      <a class="btn primary" id="paperLink" href="#" aria-disabled="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
+        <span>Paper</span></a>
+      <a class="btn" id="codeLink" href="#code">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.2 18 4.5 18 4.5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
+        <span>Code</span></a>
+      <a class="btn" href="#replay">▶ Watch the replay</a>
+      <a class="btn" href="#cite">BibTeX</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="replay">
+  <div class="wrap">
+    <div class="kicker">See it</div>
+    <h2>One task, replayed under different networks</h2>
+    <p class="sub">A three-room inspection task with a 180 s deadline: is the floor lamp in the bedroom on, and are the faucets in two bathrooms running? Every replay below is regenerated step by step with the released simulator, with the same house, task and random seeds.</p>
+    <div class="cases" data-theater="t1" role="tablist" aria-label="Replay cases"></div>
+    <div class="theater" id="t1"></div>
+    <p class="prov">House <code>val_339</code> from ProcTHOR-10k; congestion is the Radio-map channel at airtime share ρ = 0.01, where a 0.4–0.7 MB full frame needs several seconds at the typical uplink rate. Evolved programs are the final programs of paired lineage 6, chosen as the lineage pair closest to both group means (<a href="programs/improved_under_ideal.py">network-blind program</a>, <a href="programs/improved_under_wireless.py">WiSI program</a>). One illustrative task; averages are in the findings below.</p>
+  </div>
+</section>
+
+<section id="validation">
+  <div class="wrap">
+    <div class="kicker">Beyond the simulator</div>
+    <h2>Measured networks, unseen houses, a real vision model</h2>
+    <p class="sub">The paper checks the main result three independent ways. Here is one example of each: the same evolved programs on a measured LTE throughput trace and in a house never used during development, and a real vision-language model answering from rendered images.</p>
+    <div class="cases" data-theater="t2" role="tablist" aria-label="Validation cases"></div>
+    <div class="theater" id="t2"></div>
+    <p class="prov" id="t2prov"></p>
+  </div>
+</section>
+
+<section id="idea">
+  <div class="wrap">
+    <div class="kicker">The idea</div>
+    <h2>The network acts on the loop twice</h2>
+    <p class="sub">A self-improving agent repeats one cycle: run the current program, show its execution logs to an LLM, let the LLM write candidate programs, test the candidates, keep the best. When the agent depends on a wireless link, that link shapes two steps of the cycle: the <b>feedback</b> the LLM learns from (E<sub>L</sub>) and the <b>selection</b> that decides which candidates survive (E<sub>S</sub>). WiSI controls the two separately.</p>
+    <div class="card loop"><svg id="loopSvg" viewBox="0 0 1000 330" role="img" aria-label="The WiSI improvement loop"></svg></div>
+    <div class="feat">
+      <div class="card"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0"/><circle cx="12" cy="19.5" r="1.2" fill="currentColor"/></svg></div><h3>Spatiotemporal channel</h3><p>Indoor radio maps from house geometry (path loss, wall loss, shadowing), Rayleigh block fading and contention through the airtime share ρ. Uploads integrate the rate along the agent's own position and time.</p></div>
+      <div class="card"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="6" width="13" height="11" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></div><h3>Edge-assisted perception</h3><p>A small on-device model or a stronger edge model reached over the link. Programs choose what to send: full frames or crops, at three resolutions, with their own timeouts and fallbacks.</p></div>
+      <div class="card"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M13.5 4l-3 16"/></svg></div><h3>LLM program improvement</h3><p>The LLM rewrites the whole decision program, not a parameter vector. Children face the parent on fresh task batches; only strict improvements are kept, across four generations.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="findings">
+  <div class="wrap">
+    <div class="kicker">What we found</div>
+    <h2>Key findings</h2>
+    <p class="sub">Averages over many improvement runs, tasks and houses. "Network-blind" improvement assumes an ideal link while improving (the Ideal environment in the paper). Brackets are 95% bootstrap intervals; hover the charts for details.</p>
+
+    <div class="fgrid">
+      <div class="card fcard">
+        <div class="fh"><h3>Where a program is improved decides how it holds up</h3></div>
+        <p class="k" id="mainText"></p>
+        <div class="seg sm" id="segMain" role="group" aria-label="Deployment condition"></div>
+        <svg class="chart" id="mainChart"></svg>
+      </div>
+
+      <div class="card fcard">
+        <div class="fh"><h3>The paths split after the first generation</h3></div>
+        <p class="k"><b>+36.6 pp</b> under congestion after generation one ([30.9, 42.1]), and the gap persists through generation four.</p>
+        <svg class="chart" id="genChart"></svg>
+        <div class="legend" id="genLegend"></div>
+      </div>
+
+      <div class="card fcard">
+        <div class="fh"><h3>Feedback and selection both carry the network in</h3></div>
+        <p class="k"><b>+23.1 pp</b> from wireless feedback alone with selection already wireless ([16.8, 28.7]). Feedback changes what the LLM writes (compact code in 12 of 12 first responses, against 3 of 13 under ideal feedback); selection decides what survives.</p>
+        <svg class="chart" id="factChart"></svg>
+      </div>
+
+      <div class="card fcard">
+        <div class="fh"><h3>Evolved programs learn to talk less</h3></div>
+        <p class="k">Programs improved via a network-blind loop typically need 13–16 uploads per task under congestion; programs improved via WiSI need 5–9. Rewriting beats tuning: <b>77.2%</b> against 53.1% for parameter search (61.2% with 11× the budget).</p>
+        <svg class="chart" id="econChart"></svg>
+        <div class="legend"><span><i style="background:var(--ideal);border-radius:50%"></i>improved via a network-blind loop</span><span><i style="background:var(--radio);border-radius:50%"></i>improved via WiSI</span></div>
+      </div>
+
+      <div class="card fcard">
+        <div class="fh"><h3>Even for fixed programs, payload size decides sensitivity</h3></div>
+        <p class="k" id="sweepText"></p>
+        <div class="seg sm" id="segSweep" role="group" aria-label="Strategy"></div>
+        <svg class="chart" id="sweepChart"></svg>
+      </div>
+
+      <div class="card fcard">
+        <div class="fh"><h3>The result holds beyond the simulator</h3></div>
+        <div class="vrows">
+          <div class="vrow"><div class="v">+24.4 pp</div><div><b>Measured LTE traces.</b> Radio-map over network-blind improvement under congested trace-driven deployment ([18.5, 30.0]); rankings agree with the analytic channel (Spearman 0.84–0.91).</div></div>
+          <div class="vrow"><div class="v">90.1%</div><div><b>Real vision-language model.</b> Crops keep 90.1% accuracy at 6.9 kB, against 91.9% for full frames at 133.3 kB; with recalibrated perception the main advantage is 40.6 points.</div></div>
+          <div class="vrow"><div class="v">+40.9 pp</div><div><b>20 held-out houses.</b> Advantage under congestion in unseen houses, +20.3 points over the best hand-designed program; all eight pre-specified criteria met.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="takeaways">
+  <div class="wrap">
+    <div class="kicker">Takeaways</div>
+    <h2>Practical rules for improving connected agents</h2>
+    <div class="takes">
+      <div class="card take"><h3>Improve where you will deploy</h3><p>An ideal link hides the communication bottleneck, and the evolved program inherits that blind spot: 40.0% against 77.2% under congestion.</p></div>
+      <div class="card take"><h3>Wireless feedback, not only wireless tests</h3><p>Realistic selection alone is not enough. Feedback from realistic execution changes which program structures the LLM proposes in the first place.</p></div>
+      <div class="card take"><h3>Moderate or mixed load transfers best</h3><p>Moderate contention or a mix of ideal and congested tasks keeps ideal-link performance and generalizes to heavier load.</p></div>
+      <div class="card take"><h3>A simple channel model can be enough</h3><p>A uniform model that keeps the radio map's rate distribution but not its spatial structure gives comparable programs (−1.2 points, [−4.6, 2.0]).</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="code">
+  <div class="wrap">
+    <div class="kicker">Code</div>
+    <h2>Run it yourself</h2>
+    <p class="sub">Code: <a href="https://github.com/NICE-HKU/WiSI">github.com/NICE-HKU/WiSI</a>. The release contains the simulator, the improvement loop, both pools of hand-designed programs and the experiment scripts. Fixed-program experiments and dry runs need no API key; the simulator is deterministic, so the reference rows of the main table reproduce exactly.</p>
+<pre class="block"><span class="tok-c"># install and test</span>
+pip install -r requirements.txt
+python -m unittest discover -s tests
+
+<span class="tok-c"># fixed programs under Ideal and congested Radio-map</span>
+python scripts/run_fixed.py --run-id demo --agents s1_full_frame,s4_always_crop --cells A:R2,D:R4
+
+<span class="tok-c"># one improvement lineage without API calls, then the full study</span>
+python scripts/run_lineage.py --out outputs/study --cond D --regime R4 --dry-run
+python scripts/run_study.py --plan configs/improvement.json --out outputs/study
+python scripts/audit_study.py outputs/study</pre>
+  </div>
+</section>
+
+<section id="cite">
+  <div class="wrap">
+    <div class="kicker">Cite</div>
+    <h2>BibTeX</h2>
+<pre class="block" id="bib"><button class="copy" id="copyBib" type="button">Copy</button>@article{liu2026wisi,
+  title   = {{WiSI}: Wireless-in-the-Loop Self-Improvement},
+  author  = {Liu, Zongxi and Du, Hongyang},
+  year    = {2026}
+}</pre>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap">WiSI · The University of Hong Kong · Results on this page come from the paper; the replay is regenerated with the released simulator.</div></footer>
+<div id="tip" role="tooltip"></div>
+
+<script src="data/page_data.js"></script>
+<script>
+"use strict";
+// Fill these in when the paper and repository are public.
+const LINKS = { paper: "", code: "https://github.com/NICE-HKU/WiSI" };
+
+const D = window.WISI_DATA;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const NS = "http://www.w3.org/2000/svg";
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+function svgEl(tag, attrs = {}, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+// set SVG text, rendering "E_L" / "E_S" with a subscript
+function setSub(t, s) {
+  s.split(/(E_[LS])/).forEach(part => {
+    if (/^E_[LS]$/.test(part)) {
+      const a = svgEl("tspan", {}, t); a.textContent = "E";
+      const b = svgEl("tspan", { "baseline-shift": "sub", "font-size": "75%" }, t); b.textContent = part[2];
+    } else if (part) { const a = svgEl("tspan", {}, t); a.textContent = part; }
+  });
+}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
+
+/* ---------------- links & theme ---------------- */
+if (LINKS.paper) { const a = $("#paperLink"); a.href = LINKS.paper; a.removeAttribute("aria-disabled"); }
+else $("#paperLink span").textContent = "Paper (coming soon)";
+if (LINKS.code) $("#codeLink").href = LINKS.code;
+(function theme() {
+  let saved = null;
+  try { saved = localStorage.getItem("wisi-theme"); } catch (e) {}
+  if (saved) document.documentElement.setAttribute("data-theme", saved);
+  $("#themeBtn").addEventListener("click", () => {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark" ||
+      (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+    const next = dark ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("wisi-theme", next); } catch (e) {}
+    drawCharts();
+  });
+})();
+
+/* ---------------- tooltip ---------------- */
+const tip = $("#tip");
+function showTip(html, ev) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const x = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8);
+  const y = Math.min(ev.clientY + 14, innerHeight - tip.offsetHeight - 8);
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+function hideTip() { tip.style.opacity = 0; }
+
+/* ---------------- hero background ---------------- */
+(function hero() {
+  const c = $("#heroCanvas"), g = c.getContext("2d");
+  let W, H, t0 = performance.now(), dots = [];
+  function size() {
+    const r = c.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+    W = r.width; H = r.height; c.width = W * dpr; c.height = H * dpr; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    dots = Array.from({ length: 26 }, (_, i) => ({ a: (i * 137.5) % 360, r: 0.25 + ((i * 61) % 70) / 100, s: 0.4 + (i % 5) / 10 }));
+  }
+  function frame(now) {
+    const t = Math.max(0, (now - t0) / 1000);
+    g.clearRect(0, 0, W, H);
+    const cx = W * 0.82, cy = H * 0.42, R = Math.max(W, H) * 0.75;
+    for (let i = 0; i < 7; i++) {
+      const p = ((t * 0.07 + i / 7) % 1);
+      g.beginPath(); g.arc(cx, cy, p * R, 0, Math.PI * 2);
+      g.strokeStyle = `rgba(103,198,245,${0.16 * (1 - p)})`; g.lineWidth = 1.2; g.stroke();
+    }
+    g.beginPath(); g.arc(cx, cy, 5, 0, Math.PI * 2); g.fillStyle = "#67c6f5"; g.fill();
+    for (const d of dots) {
+      const ang = (d.a + t * d.s * 6) * Math.PI / 180, rr = d.r * R * 0.55;
+      const x = cx + Math.cos(ang) * rr, y = cy + Math.sin(ang) * rr * 0.6;
+      const q = Math.max(0, 1 - rr / (R * 0.55));
+      g.beginPath(); g.arc(x, y, 1.6, 0, Math.PI * 2); g.fillStyle = `rgba(160,205,245,${0.25 + 0.5 * q})`; g.fill();
+      if ((Math.floor(t * 0.5 + d.a) % 6) === 0) {
+        g.beginPath(); g.moveTo(x, y); g.lineTo(cx, cy); g.strokeStyle = `rgba(103,198,245,${0.10 + 0.18 * q})`; g.lineWidth = 0.8; g.stroke();
+      }
+    }
+    if (!reduceMotion) requestAnimationFrame(frame);
+  }
+  size(); addEventListener("resize", size); requestAnimationFrame(frame);
+})();
+
+/* =================================================================== replay */
+const PROGRAMS = {
+  seed: { name: "Seed program", color: "#a3a19a", trail: "rgba(190,188,180,.55)" },
+  ideal: { name: "Improved via a network-blind loop", desc: "ideal link assumed while improving", color: "#e34948", trail: "rgba(227,73,72,.55)" },
+  wireless: { name: "Improved via WiSI", desc: "Radio-map feedback and selection, ρ = 0.01", color: "#3987e5", trail: "rgba(57,135,229,.6)" },
+};
+const V = D.validation;
+const R = D.replay;
+const CASES1 = [
+  { id: "seed", tab: "1 · What the feedback shows", scene: D.scene, data: R.seed,
+    title: "The same seed program on two networks",
+    text: "Before any improvement, the seed program sends high-resolution full frames. Over an ideal link every upload succeeds, so its logs show nothing to fix. Under congestion every upload times out. These two logs are exactly what the LLM sees as feedback in each environment.",
+    sides: { left: "Ideal link", right: "Congested link, ρ = 0.01" } },
+  { id: "evolved", tab: "2 · What evolves", scene: D.scene, data: R.evolved,
+    title: "Two evolved programs under the same congestion",
+    text: "After four generations, the program improved via a network-blind loop still relies on full frames: all 17 uploads time out and one answer is wrong. The program improved via WiSI uses crops and smaller frames: 5 uploads, none lost, all three answers right.",
+    sides: { left: "congested link, ρ = 0.01", right: "congested link, ρ = 0.01" } },
+  { id: "ideal", tab: "3 · Back on an ideal link", scene: D.scene, data: R.ideal,
+    title: "The same two programs on an ideal link",
+    text: "Improving under congestion costs little when the link is good: both programs solve the task. The WiSI program is somewhat slower here (74.8 s against 62.2 s), consistent with the small ideal-link differences in the main results.",
+    sides: { left: "ideal link", right: "ideal link" } },
+];
+const lteMed = V.lte.trace_mbps.slice().sort((a, b) => a - b)[Math.floor(V.lte.trace_mbps.length / 2)];
+const CASES2 = [
+  { id: "lte", tab: "Measured LTE traffic", scene: D.scene, data: V.lte.sides, trace: V.lte.trace_mbps,
+    title: "A measured 4G LTE link instead of the analytic channel",
+    text: `Same task and programs as above, but uploads follow a measured pedestrian LTE throughput trace scaled to ρ = 0.01 (shown at the bottom of each map). Its bursts let some full frames through: the network-blind program still answers correctly, but 7 of its 11 uploads time out and it needs 140.2 s. The WiSI program needs 5 uploads, none lost, and 79.9 s.`,
+    sides: { left: "Measured LTE trace, ρ = 0.01", right: "Measured LTE trace, ρ = 0.01" },
+    prov: `Trace <code>${V.lte.trace_file}</code> from the audit pool of the Irish 4G LTE dataset (Raca et al., MMSys 2018), starting at ${V.lte.trace_offset_s} s and scaled so that its median matches the Radio-map channel at ρ = 0.01. Across all programs and tasks, Radio-map improvement leads network-blind improvement by 24.4 pp under congested trace-driven deployment.` },
+  { id: "heldout", tab: "An unseen house", scene: V.heldout.scene, data: V.heldout.sides,
+    title: "A house never used during development",
+    text: "House val_536 is one of the 20 held-out houses, with a different layout, a different access point and different targets: is a box open, a faucet running, a bowl clean? Under congestion the network-blind program loses all 7 uploads and gets one of three items right; the WiSI program completes all 5 uploads and answers all three.",
+    sides: { left: "Held-out house, congested, ρ = 0.01", right: "Held-out house, congested, ρ = 0.01" },
+    prov: "Selection rule (as for the motivation case): held-out houses in split order, inspection tasks in index order, first task where the network-blind program fails and the WiSI program succeeds with a crop; the task before it was failed by both programs. Over all 20 held-out houses, the advantage under congestion is 40.9 pp." },
+  { id: "vlm", tab: "A real vision-language model", vlm: true,
+    title: "A real vision-language model on rendered scenes",
+    text: "Frames rendered in AI2-THOR and sent to a vision-language model at four payload settings. Crops keep the task-relevant pixels at a fraction of the size; uniformly shrinking the whole frame loses them.",
+    prov: "Across 273 rendered task items, high-resolution full frames reach 91.9% accuracy at a median 133.3 kB, high-resolution crops 90.1% at 6.9 kB, and low-resolution full frames 89.0% at 21.4 kB. Images are display copies of the transmitted frames; sizes are the transmitted JPEG sizes. Yellow boxes are not part of the model input." },
+];
+
+function prettyQuery(q) {
+  return q.replace(/\s*\(room\|\d+\)/, "").replace(/([a-z])([A-Z])/g, "$1 $2").replace(/ (\w)/g, (m, c) => " " + c.toLowerCase()).replace(/^is/, "Is");
+}
+function rateColor(v) {          // log-scaled single-hue (teal) ramp on the dark theater surface
+  const lo = Math.log(0.05), hi = Math.log(2.3);
+  const q = Math.max(0, Math.min(1, (Math.log(v) - lo) / (hi - lo)));
+  const stops = [[15, 24, 38], [15, 48, 52], [22, 88, 82], [46, 140, 122]];
+  const p = q * (stops.length - 1), i = Math.min(stops.length - 2, Math.floor(p)), w = p - i;
+  const c = stops[i].map((a, k) => Math.round(a + (stops[i + 1][k] - a) * w));
+  return `rgb(${c[0]},${c[1]},${c[2]})`;
+}
+function roundRect(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+
+const PANE_HTML = side => `
+  <div class="pane" data-side="${side}">
+    <div class="pane-h"><span class="chip"></span><div class="t"><span class="ttl"></span><small></small></div></div>
+    <div class="canvas-wrap"><canvas></canvas><div class="endcard"></div></div>
+    <div class="status"><span class="dot"></span><span class="txt">Waiting to start</span></div>
+    <div class="hud"><div><div class="l">Clock</div><div class="n" data-k="t">0.0 s</div></div><div><div class="l">Uploads</div><div class="n" data-k="up">0</div></div><div><div class="l">Timeouts</div><div class="n bad" data-k="to">0</div></div><div><div class="l">Completed</div><div class="n" data-k="ok">0</div></div></div>
+  </div>`;
+const THEATER_HTML = `
+  <div class="case-head"></div>
+  <div class="replay-view">
+    <div class="panes">
+      <button class="start" type="button" aria-label="Play the replay"><div>
+        <div class="big"><svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></div>
+        <div class="cap">Play the replay<small>plays the 180 s task in about 22 s</small></div></div></button>
+      ${PANE_HTML("left")}${PANE_HTML("right")}
+    </div>
+    <div class="controls">
+      <button class="pbtn" type="button" aria-label="Play"></button>
+      <button class="ibtn restart" type="button">Restart</button>
+      <div class="speed" role="group" aria-label="Playback speed"><button type="button" data-s="4">4×</button><button type="button" data-s="8" aria-pressed="true">8×</button><button type="button" data-s="16">16×</button></div>
+      <div class="clock">0.0 s / 180 s</div>
+    </div>
+    <div class="timeline" role="slider" aria-label="Replay time" aria-valuemin="0" aria-valuemax="180" aria-valuenow="0" tabindex="0"></div>
+    <div class="maplegend">
+      <span class="lg-rate"><span class="grad" style="display:inline-block;vertical-align:middle"></span>&nbsp; uplink rate at ρ = 0.01 (<span class="rlo"></span>–<span class="rhi"></span> Mbit/s); ideal link: no rate limit</span>
+      <span class="lg-trace" hidden>measured LTE rate: shown along the bottom of each map; no spatial structure</span>
+      <span>◉ access point</span><span>①②③ inspection targets</span>
+      <span style="color:#5fd38a">▮ upload completed</span><span style="color:#ff8a8a">▮ upload timed out</span>
+    </div>
+  </div>
+  <div class="vlm-view" hidden></div>`;
+
+class Pane {
+  constructor(side, root) {
+    this.side = side; this.root = root;
+    this.cv = $("canvas", root); this.g = this.cv.getContext("2d");
+    this.end = $(".endcard", root); this.status = $(".status .txt", root); this.dot = $(".status .dot", root);
+    this.hud = {}; $$(".hud .n", root).forEach(n => this.hud[n.dataset.k] = n);
+  }
+  load(c) {
+    this.c = c; this.S = c.scene; this.d = c.data[this.side]; this.p = PROGRAMS[this.d.program];
+    this.net = this.d.cond === "A" ? "ideal" : this.d.cond === "T" ? "trace" : "radio";
+    this.names = this.S.items.map(it => it.target.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase());
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const r of this.S.rooms) for (const [x, z] of r.poly) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    this.b = [x0 - 0.9, x1 + 0.4, z0 - 0.4, z1 + 0.4];
+    if (this.net === "trace") this.b[2] -= (this.b[3] - this.b[2]) * 0.16;      // room for the trace strip
+    $(".chip", this.root).style.background = this.p.color;
+    const ttl = c.id === "seed" ? (this.net === "ideal" ? "Seed program, ideal link" : "Seed program, congested link") : this.p.name;
+    $(".ttl", this.root).textContent = ttl;
+    $(".pane-h small", this.root).innerHTML = (this.p.desc ? this.p.desc + "<br>" : "") + "Deployed: " + c.sides[this.side];
+    this.cv.setAttribute("aria-label", `Floor plan replay: ${ttl}, ${c.sides[this.side]}`);
+    this.uploads = this.d.events.filter(e => e.a === "edge_query");
+    this.locals = this.d.events.filter(e => e.a === "local");
+    this.tEnd = this.d.t_total;
+    this.end.style.inset = this.net === "trace" ? "48px 12px auto 12px" : "";   // keep the trace strip visible
+    this.buildEnd(); this.size();
+  }
+  size() {
+    const [x0, x1, z0, z1] = this.b;
+    const w = this.cv.parentElement.clientWidth, dpr = Math.min(devicePixelRatio || 1, 2);
+    const h = w * (z1 - z0) / (x1 - x0);
+    this.W = w; this.H = h; this.s = w / (x1 - x0);
+    this.cv.width = w * dpr; this.cv.height = h * dpr; this.cv.style.height = h + "px";
+    this.g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.bg = document.createElement("canvas"); this.bg.width = this.cv.width; this.bg.height = this.cv.height;
+    const g = this.bg.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); this.drawStatic(g);
+  }
+  X(x) { return (x - this.b[0]) * this.s; }
+  Y(z) { return (this.b[3] - z) * this.s; }
+  drawStatic(g) {
+    const S = this.S;
+    g.fillStyle = "#0f1826"; g.fillRect(0, 0, this.W, this.H);
+    const cs = S.grid * this.s + 0.6;
+    for (const [x, z, v] of S.cells) { g.fillStyle = this.net === "radio" ? rateColor(v) : this.net === "trace" ? "#1d2b3d" : "#1a2d40"; g.fillRect(this.X(x) - cs / 2, this.Y(z) - cs / 2, cs, cs); }
+    g.lineCap = "round";
+    for (const [x0, z0, x1, z1, k] of S.walls) {
+      if (k === 1) continue;
+      g.beginPath(); g.moveTo(this.X(x0), this.Y(z0)); g.lineTo(this.X(x1), this.Y(z1));
+      g.strokeStyle = k === 3 ? "#5aa7d8" : k === 2 ? "#6c7d92" : "#c9d4e2";
+      g.lineWidth = k === 0 ? Math.max(1.6, this.s * 0.09) : 1.2; g.stroke();
+    }
+    g.font = `600 ${Math.max(9, this.s * 0.42)}px system-ui,sans-serif`; g.textAlign = "center"; g.fillStyle = "rgba(220,232,245,.55)";
+    for (const r of S.rooms) {
+      let cx = 0, cz = 0; for (const [x, z] of r.poly) { cx += x; cz += z; } cx /= r.poly.length; cz /= r.poly.length;
+      g.fillText(r.type.replace("LivingRoom", "Living room").toUpperCase(), this.X(cx), this.Y(cz));
+    }
+    const label = { ideal: "IDEAL LINK", radio: "CONGESTED · ρ = 0.01", trace: "MEASURED LTE · ρ = 0.01" }[this.net];
+    g.font = "700 11px system-ui,sans-serif"; const tw = g.measureText(label).width + 16;
+    g.fillStyle = this.net === "ideal" ? "rgba(103,198,245,.16)" : "rgba(255,138,138,.16)";
+    roundRect(g, this.W - tw - 8, 8, tw, 22, 11); g.fill();
+    g.fillStyle = this.net === "ideal" ? "#9fd6f5" : "#ffb0b0"; g.textAlign = "left"; g.fillText(label, this.W - tw, 23);
+  }
+  pose(t) {
+    const tr = this.d.track; let i = 0;
+    if (t <= tr[0][0]) return tr[0];
+    while (i < tr.length - 1 && tr[i + 1][0] <= t) i++;
+    if (i >= tr.length - 1) return tr[tr.length - 1];
+    const a = tr[i], b = tr[i + 1], w = (t - a[0]) / Math.max(1e-6, b[0] - a[0]);
+    const dh = ((b[3] - a[3] + 540) % 360) - 180;
+    return [t, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w, a[3] + dh * w];
+  }
+  upPhase(u) { return u.status === "ok" ? Math.max(0.02, u.t1 - u.t0 - u.t_edge - 0.03) : (u.t1 - u.t0); }
+  drawTrace(g, t) {
+    const tr = this.c.trace, dl = this.S.deadline, max = Math.max(...tr) * 1.08;
+    const x0 = 10, x1 = this.W - 10, h = Math.max(34, this.H * 0.12), y1 = this.H - 8, y0 = y1 - h;
+    g.fillStyle = "rgba(9,15,25,.82)"; roundRect(g, x0 - 4, y0 - 16, x1 - x0 + 8, h + 20, 8); g.fill();
+    const X = s => x0 + (x1 - x0) * s / dl, Y = v => y1 - h * v / max;
+    g.beginPath(); tr.forEach((v, s) => { if (s === 0) g.moveTo(X(s), Y(v)); else { g.lineTo(X(s), Y(tr[s - 1])); g.lineTo(X(s), Y(v)); } });
+    g.strokeStyle = "rgba(103,198,245,.55)"; g.lineWidth = 1.2; g.stroke();
+    const tc = Math.min(t, dl);
+    g.beginPath(); for (let s = 0; s <= Math.floor(tc); s++) { if (s === 0) g.moveTo(X(s), Y(tr[s])); else { g.lineTo(X(s), Y(tr[s - 1])); g.lineTo(X(s), Y(tr[s])); } }
+    g.lineTo(X(tc), Y(tr[Math.min(tr.length - 1, Math.floor(tc))]));
+    g.strokeStyle = "#67c6f5"; g.lineWidth = 2; g.stroke();
+    g.beginPath(); g.moveTo(X(tc), y0); g.lineTo(X(tc), y1); g.strokeStyle = "rgba(238,243,250,.8)"; g.lineWidth = 1; g.stroke();
+    const now = tr[Math.min(tr.length - 1, Math.floor(tc))];
+    g.font = "600 11px system-ui,sans-serif"; g.fillStyle = "#cfe0f4"; g.textAlign = "left";
+    g.fillText(`measured uplink: ${now.toFixed(2)} Mbit/s`, x0, y0 - 4);
+  }
+  render(t, flashSim) {
+    const g = this.g, S = this.S; g.setTransform(1, 0, 0, 1, 0, 0); g.drawImage(this.bg, 0, 0);
+    const dpr = this.cv.width / this.W; g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const s = this.s;
+    const ax = this.X(S.ap[0]), ay = this.Y(S.ap[1]);
+    const active = this.uploads.find(u => t >= u.t0 && t < u.t1);
+    for (let i = 0; i < 3; i++) {
+      const ph = ((t * 0.6 + i / 3) % 1);
+      g.beginPath(); g.arc(ax, ay, s * (0.4 + ph * 2.4), 0, Math.PI * 2);
+      g.strokeStyle = `rgba(103,198,245,${(active ? 0.55 : 0.22) * (1 - ph)})`; g.lineWidth = 1.4; g.stroke();
+    }
+    g.beginPath(); g.arc(ax, ay, s * 0.32, 0, Math.PI * 2); g.fillStyle = "#67c6f5"; g.fill();
+    g.beginPath(); g.arc(ax, ay, s * 0.14, 0, Math.PI * 2); g.fillStyle = "#0f1826"; g.fill();
+    const lastItemEv = this.d.events.filter(e => e.item != null && e.t0 <= t).pop();
+    const curItem = lastItemEv && t < this.tEnd ? lastItemEv.item : -1;
+    S.items.forEach((it, i) => {
+      const x = this.X(it.pos[0]), y = this.Y(it.pos[1]), r = Math.max(7, s * 0.36);
+      g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2);
+      g.fillStyle = i === curItem ? "#f5d76e" : "rgba(245,215,110,.22)"; g.fill();
+      g.lineWidth = 1.5; g.strokeStyle = "#f5d76e"; g.stroke();
+      g.fillStyle = i === curItem ? "#0f1826" : "#f5d76e"; g.font = `700 ${r * 1.15}px system-ui,sans-serif`; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(String(i + 1), x, y + 0.5);
+    });
+    g.textBaseline = "alphabetic";
+    const tr = this.d.track; g.beginPath(); let started = false;
+    for (const k of tr) { if (k[0] > t) break; const x = this.X(k[1]), y = this.Y(k[2]); if (!started) { g.moveTo(x, y); started = true; } else g.lineTo(x, y); }
+    const cur = this.pose(Math.min(t, this.tEnd));
+    if (started) g.lineTo(this.X(cur[1]), this.Y(cur[2]));
+    g.strokeStyle = this.p.trail; g.lineWidth = Math.max(1.5, s * 0.1); g.lineJoin = "round"; g.stroke();
+    const rx = this.X(cur[1]), ry = this.Y(cur[2]), hd = cur[3] * Math.PI / 180;
+    const loc = this.locals.find(e => t >= e.t0 && t < e.t0 + Math.max(0.5, e.t1 - e.t0));
+    if (loc && t < this.tEnd) {
+      g.beginPath(); g.moveTo(rx, ry);
+      const a0 = -Math.PI / 2 + hd - Math.PI / 4, a1 = -Math.PI / 2 + hd + Math.PI / 4;
+      g.arc(rx, ry, s * 2.2, a0, a1); g.closePath(); g.fillStyle = "rgba(255,255,255,.10)"; g.fill();
+    }
+    if (active && t < this.tEnd) {
+      const up = this.upPhase(active), inUp = t < active.t0 + up;
+      const col = active.status === "ok" ? "95,211,138" : "255,138,138";
+      g.save(); g.setLineDash([4, 5]); g.lineDashOffset = -t * 30;
+      g.beginPath(); g.moveTo(rx, ry); g.lineTo(ax, ay);
+      g.strokeStyle = inUp ? `rgba(${col},.85)` : "rgba(103,198,245,.8)"; g.lineWidth = 2; g.stroke(); g.restore();
+      if (inUp) {
+        const w = (t - active.t0) / Math.max(0.05, up);
+        const frac = active.status === "ok" ? w : Math.min(0.9, w * 0.55);
+        g.beginPath(); g.arc(rx + (ax - rx) * frac, ry + (ay - ry) * frac, 3.5, 0, Math.PI * 2); g.fillStyle = `rgb(${col})`; g.fill();
+      }
+      const label = `${active.kind === "crop" ? "crop" : "full frame"} · ${active.res} · ${active.kb.toFixed(0)} kB`;
+      g.font = "600 12px system-ui,sans-serif"; const tw = g.measureText(label).width + 14;
+      let lx = Math.min(Math.max(rx - tw / 2, 4), this.W - tw - 4), ly = ry - s * 0.9 - 22; if (ly < 4) ly = ry + s * 0.9 + 6;
+      g.fillStyle = "rgba(9,15,25,.9)"; g.strokeStyle = `rgba(${col},.9)`; g.lineWidth = 1;
+      roundRect(g, lx, ly, tw, 20, 6); g.fill(); g.stroke();
+      g.fillStyle = "#e9f2fc"; g.textAlign = "left"; g.fillText(label, lx + 7, ly + 14);
+      const prog = Math.min(1, (t - active.t0) / Math.max(0.05, inUp ? up : (active.t1 - active.t0)));
+      g.fillStyle = `rgba(${col},.9)`; g.fillRect(lx + 4, ly + 17, (tw - 8) * prog, 2);
+    }
+    for (const u of this.uploads) {
+      if (t >= u.t1 && t < u.t1 + flashSim && u.t1 <= this.tEnd + 1e-6) {
+        const q = 1 - (t - u.t1) / flashSim;
+        g.globalAlpha = q; g.font = `800 ${Math.max(14, s * 0.9)}px system-ui,sans-serif`; g.textAlign = "center";
+        g.fillStyle = u.status === "ok" ? "#5fd38a" : "#ff8a8a";
+        g.fillText(u.status === "ok" ? "✓" : "✕ timeout", rx, ry + s * 0.9 + 16 + (1 - q) * 10);
+        g.globalAlpha = 1;
+      }
+    }
+    const rr = Math.max(7, s * 0.42);
+    g.beginPath(); g.arc(rx, ry, rr * 2.1, 0, Math.PI * 2); g.fillStyle = this.p.color + "33"; g.fill();
+    g.beginPath(); g.arc(rx, ry, rr, 0, Math.PI * 2); g.fillStyle = this.p.color; g.fill();
+    g.lineWidth = 2; g.strokeStyle = "#0f1826"; g.stroke();
+    g.beginPath();
+    const hx = Math.sin(hd), hy = -Math.cos(hd);
+    g.moveTo(rx + hx * rr * 1.65, ry + hy * rr * 1.65);
+    g.lineTo(rx + hy * rr * 0.55, ry - hx * rr * 0.55); g.lineTo(rx - hy * rr * 0.55, ry + hx * rr * 0.55); g.closePath();
+    g.fillStyle = "#ffffff"; g.fill();
+    if (this.net === "trace") this.drawTrace(g, t);
+    this.updateHud(t, active);
+  }
+  updateHud(t, active) {
+    const tc = Math.min(t, this.tEnd);
+    const done = this.uploads.filter(u => u.t1 <= tc + 1e-9);
+    this.hud.t.textContent = tc.toFixed(1) + " s";
+    this.hud.up.textContent = this.uploads.filter(u => u.t0 <= tc).length;
+    this.hud.to.textContent = done.filter(u => u.status !== "ok").length;
+    this.hud.ok.textContent = done.filter(u => u.status === "ok").length;
+    let txt, col = "#5f748d";
+    const e = this.d.events.filter(e => e.item != null && e.t0 <= t).pop(), item = e ? e.item : null;
+    const where = item != null ? ` · item ${item + 1} (${this.names[item]})` : "";
+    if (t >= this.tEnd) { txt = `Answered at ${this.tEnd.toFixed(1)} s`; col = this.d.success ? "#5fd38a" : "#ff8a8a"; }
+    else if (active) {
+      if (t < active.t0 + this.upPhase(active)) { txt = `Uploading a ${active.kind === "crop" ? "crop" : "full frame"} (${active.res}, ${active.kb.toFixed(0)} kB)` + where; col = active.status === "ok" ? "#5fd38a" : "#ff8a8a"; }
+      else { txt = "Edge model answering" + where; col = "#67c6f5"; }
+    } else if (this.locals.some(e => t >= e.t0 && t < e.t1 + 0.4)) { txt = "Looking around with the on-device model" + where; col = "#cfd8e3"; }
+    else if (t < 1) txt = "Planning the route";
+    else txt = "Moving" + where;
+    if (this.status.textContent !== txt) this.status.textContent = txt;
+    this.dot.style.background = col;
+    this.end.classList.toggle("show", t >= this.tEnd + 0.2);
+  }
+  buildEnd() {
+    const ans = this.d.answer.split("|");
+    let h = "";
+    this.S.items.forEach((it, i) => {
+      const ok = ans[i] === it.gt;
+      h += `<div class="r"><span>${i + 1}. ${prettyQuery(it.query)}</span><span class="${ok ? "ok" : "no"}">${ans[i]} ${ok ? "✓" : "✕ (truth: " + it.gt + ")"}</span></div>`;
+    });
+    h += `<div class="verdict ${this.d.success ? "ok" : "no"}">${this.d.success ? "Task solved" : "Task failed"} · ${this.d.items_correct}/3 correct · ${this.d.n_uploads} uploads, ${this.d.n_timeouts} timed out</div>`;
+    this.end.innerHTML = h;
+  }
+}
+
+const PLAY = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+const PAUSE = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+const THEATERS = [];
+
+class Theater {
+  constructor(id, cases, start) {
+    this.root = $("#" + id); this.root.innerHTML = THEATER_HTML; this.cases = cases;
+    this.tabs = $(`.cases[data-theater="${id}"]`); this.prov = $("#" + id + "prov");
+    this.panes = $$(".pane", this.root).map(el => new Pane(el.dataset.side, el));
+    this.player = { t: 0, playing: false, speed: 8, last: 0, started: false };
+    this.idx = start; this.tl = {};
+    $(".pbtn", this.root).innerHTML = PLAY;
+    const allCells = cases.filter(c => c.scene).flatMap(c => c.scene.cells.map(x => x[2]));
+    $(".rlo", this.root).textContent = Math.min(...allCells).toFixed(2);
+    $(".rhi", this.root).textContent = Math.max(...allCells).toFixed(1);
+    cases.forEach((c, i) => {
+      const b = document.createElement("button"); b.type = "button"; b.setAttribute("role", "tab"); b.textContent = c.tab;
+      b.addEventListener("click", () => this.select(i));
+      b.addEventListener("keydown", e => {
+        if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+          const j = (i + (e.key === "ArrowRight" ? 1 : cases.length - 1)) % cases.length; this.select(j); $$("button", this.tabs)[j].focus();
+        }
+      });
+      this.tabs.appendChild(b);
+    });
+    $(".start", this.root).addEventListener("click", () => this.play(true));
+    $(".pbtn", this.root).addEventListener("click", () => this.play(!this.player.playing));
+    $(".restart", this.root).addEventListener("click", () => { this.player.t = 0; this.frame(0); this.play(true); });
+    $$(".speed button", this.root).forEach(b => b.addEventListener("click", () => {
+      this.player.speed = +b.dataset.s; $$(".speed button", this.root).forEach(x => x.setAttribute("aria-pressed", x === b));
+    }));
+    const box = $(".timeline", this.root);
+    const seek = ev => {
+      const r = box.getBoundingClientRect(), x = ev.clientX - r.left;
+      const frac = (x - this.tl.L) / (this.tl.W - this.tl.L - this.tl.R);
+      this.player.t = Math.max(0, Math.min(1, frac)) * this.deadline(); $(".start", this.root).hidden = true; this.player.started = true; this.frame(this.player.t);
+    };
+    let drag = false;
+    box.addEventListener("pointerdown", e => { drag = true; box.setPointerCapture(e.pointerId); seek(e); });
+    box.addEventListener("pointermove", e => { if (drag) seek(e); });
+    box.addEventListener("pointerup", () => drag = false);
+    box.addEventListener("keydown", e => {
+      if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+        this.player.t = Math.max(0, Math.min(this.deadline(), this.player.t + (e.key === "ArrowRight" ? 5 : -5))); this.frame(this.player.t); e.preventDefault();
+      }
+    });
+    THEATERS.push(this);
+    this.select(start);
+  }
+  deadline() { return this.cases[this.idx].scene ? this.cases[this.idx].scene.deadline : 180; }
+  select(i) {
+    this.idx = i; const c = this.cases[i];
+    $$("button", this.tabs).forEach((b, j) => { b.setAttribute("aria-selected", j === i); b.tabIndex = j === i ? 0 : -1; });
+    $(".case-head", this.root).innerHTML = `<b>${c.title}</b><span>${c.text}</span>`;
+    if (this.prov) this.prov.innerHTML = c.prov || "";
+    const isVlm = !!c.vlm;
+    $(".replay-view", this.root).hidden = isVlm; $(".vlm-view", this.root).hidden = !isVlm;
+    if (isVlm) { this.play(false); buildVlm($(".vlm-view", this.root)); return; }
+    $(".lg-rate", this.root).hidden = !!c.trace; $(".lg-trace", this.root).hidden = !c.trace;
+    this.panes.forEach(p => p.load(c));
+    this.tmax = Math.max(...this.panes.map(p => p.tEnd)) + 6;
+    this.buildTimeline(); this.player.t = 0; this.frame(0);
+    if (this.player.started) this.play(true);
+  }
+  buildTimeline() {
+    const box = $(".timeline", this.root); box.innerHTML = "";
+    const W = box.clientWidth, H = 62, L = 118, R = 12, DL = this.deadline();
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, height: H }, box);
+    const X = t => L + (W - L - R) * t / DL;
+    svgEl("rect", { x: L, y: 6, width: W - L - R, height: H - 22, rx: 6, fill: "#0f1826", stroke: "#1d2a3c" }, svg);
+    for (let s = 0; s <= DL; s += 30) {
+      svgEl("line", { x1: X(s), x2: X(s), y1: 6, y2: H - 16, stroke: "#1d2a3c" }, svg);
+      const tx = svgEl("text", { x: X(s), y: H - 3, "text-anchor": "middle", "font-size": 11, fill: "#7d92ab" }, svg); tx.textContent = s + " s";
+    }
+    const c = this.cases[this.idx];
+    this.panes.forEach((p, i) => {
+      const y = 13 + i * 19;
+      const lab = svgEl("text", { x: 0, y: y + 9, "font-size": 12, fill: p.d.program === "seed" ? "#c9c7bf" : p.p.color, "font-weight": 600 }, svg);
+      lab.textContent = c.id === "seed" ? (p.net === "ideal" ? "Seed · ideal" : "Seed · congested") : (p.d.program === "ideal" ? "Network-blind" : "WiSI");
+      svgEl("rect", { x: X(0), y: y + 4, width: X(p.tEnd) - X(0), height: 3, rx: 1.5, fill: p.p.color, opacity: .35 }, svg);
+      for (const u of p.uploads) svgEl("rect", { x: X(u.t0), y, width: Math.max(2.5, X(u.t1) - X(u.t0)), height: 11, rx: 2, fill: u.status === "ok" ? "#5fd38a" : "#ff8a8a" }, svg);
+      svgEl("path", { d: `M${X(p.tEnd)} ${y - 1}v13`, stroke: "#eef3fa", "stroke-width": 2 }, svg);
+    });
+    svgEl("line", { x1: X(DL), x2: X(DL), y1: 4, y2: H - 16, stroke: "#f5d76e", "stroke-width": 1.5 }, svg);
+    this.tl = { head: svgEl("line", { x1: X(0), x2: X(0), y1: 2, y2: H - 14, stroke: "#eef3fa", "stroke-width": 2 }, svg), X, L, W, R };
+  }
+  frame(t) {
+    if (this.cases[this.idx].vlm) return;
+    const flash = Math.max(1.2, 0.5 * this.player.speed), DL = this.deadline();
+    this.panes.forEach(p => p.render(t, flash));
+    $(".clock", this.root).textContent = `${Math.min(t, DL).toFixed(1)} s / ${DL} s`;
+    if (this.tl.head) { const x = this.tl.X(Math.min(t, DL)); this.tl.head.setAttribute("x1", x); this.tl.head.setAttribute("x2", x); }
+    $(".timeline", this.root).setAttribute("aria-valuenow", Math.round(t));
+  }
+  play(on) {
+    const P = this.player; P.playing = on;
+    $(".pbtn", this.root).innerHTML = on ? PAUSE : PLAY; $(".pbtn", this.root).setAttribute("aria-label", on ? "Pause" : "Play");
+    if (!on) return;
+    P.started = true; $(".start", this.root).hidden = true;
+    if (P.t >= this.tmax) P.t = 0;
+    P.last = performance.now();
+    const loop = now => {
+      if (!P.playing) return;
+      const dt = (now - P.last) / 1000; P.last = now;
+      P.t = Math.min(this.tmax, P.t + dt * P.speed); this.frame(P.t);
+      if (P.t >= this.tmax) { this.play(false); return; }
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+  }
+  resize() { if (this.cases[this.idx].vlm) return; this.panes.forEach(p => p.size()); this.buildTimeline(); this.frame(this.player.t); }
+}
+
+/* real-VLM viewer */
+const VLM_PAYLOADS = [["full-high", "Full frame · high"], ["full-low", "Full frame · low"], ["crop-high", "Crop · high"], ["crop-low", "Crop · low"]];
+const vlmState = { ex: 1, pl: "full-high" };
+function buildVlm(box) {
+  const items = V.vlm.filter(v => v.example === vlmState.ex), cur = items.find(v => v.payload === vlmState.pl);
+  const fullHigh = items.find(v => v.payload === "full-high");
+  const exBtns = [1, 2].map(e => `<button type="button" data-ex="${e}" aria-pressed="${e === vlmState.ex}">${e === 1 ? "Counting" : "Spatial relation"}</button>`).join("");
+  const plBtns = VLM_PAYLOADS.map(([k, n]) => {
+    const it = items.find(v => v.payload === k);
+    return `<button type="button" data-pl="${k}" aria-pressed="${k === vlmState.pl}"><span>${n}</span><small>${it.kb.toFixed(1)} kB ${it.correct ? '<b class="ok">✓</b>' : '<b class="no">✕</b>'}</small></button>`;
+  }).join("");
+  const maxKb = fullHigh.kb;
+  const bars = VLM_PAYLOADS.map(([k, n]) => {
+    const it = items.find(v => v.payload === k);
+    return `<div class="kbrow${k === vlmState.pl ? " on" : ""}"><span>${n}</span><i style="width:${Math.max(1.5, 100 * it.kb / maxKb)}%"></i><em>${it.kb.toFixed(1)} kB</em></div>`;
+  }).join("");
+  box.innerHTML = `
+    <div class="vlm-grid">
+      <div class="vlm-img">
+        <div class="vlm-frame"><img src="${cur.file}" alt="${n2(cur.payload)} payload rendered in AI2-THOR, ${cur.width}×${cur.height} pixels" width="${cur.width}" height="${cur.height}"></div>
+        <div class="vlm-pl" role="group" aria-label="Payload">${plBtns}</div>
+      </div>
+      <div class="vlm-side">
+        <div class="seg dark" role="group" aria-label="Example">${exBtns}</div>
+        <div class="vlm-q"><span>Question</span>${prettyQuery(cur.query).replace(/^how/, "How")}</div>
+        <div class="vlm-a ${cur.correct ? "ok" : "no"}"><span>Model answer · ${n2(cur.payload)}, ${cur.width}×${cur.height}</span><b>${cur.answer} ${cur.correct ? "✓" : "✕"}</b>${cur.correct ? "" : `<small>truth: ${cur.gt}</small>`}</div>
+        <div class="vlm-kb"><span>Transmitted size</span>${bars}</div>
+      </div>
+    </div>`;
+  $$("[data-ex]", box).forEach(b => b.addEventListener("click", () => { vlmState.ex = +b.dataset.ex; buildVlm(box); }));
+  $$("[data-pl]", box).forEach(b => b.addEventListener("click", () => { vlmState.pl = b.dataset.pl; buildVlm(box); }));
+}
+function n2(k) { return VLM_PAYLOADS.find(p => p[0] === k)[1].toLowerCase(); }
+
+new Theater("t1", CASES1, 1);
+new Theater("t2", CASES2, 0);
+let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { THEATERS.forEach(t => t.resize()); drawCharts(); }, 120); });
+
+/* =================================================================== method loop */
+function drawLoop() {
+  const svg = $("#loopSvg"); svg.innerHTML = "";
+  const ink = css("--ink"), ink2 = css("--ink-2"), ring = css("--axis"), surf = css("--surface-2"), acc = css("--accent");
+  const defs = svgEl("defs", {}, svg);
+  const mk = svgEl("marker", { id: "arw", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" }, defs);
+  svgEl("path", { d: "M0 0L10 5L0 10z", fill: ink2 }, mk);
+  const node = (x, y, w, h, title, sub, hl) => {
+    svgEl("rect", { x, y, width: w, height: h, rx: 14, fill: hl ? `color-mix(in srgb, ${acc} 12%, ${surf})` : surf, stroke: hl ? acc : ring, "stroke-width": hl ? 2 : 1 }, svg);
+    const t = svgEl("text", { x: x + w / 2, y: y + h / 2 - (sub ? 6 : -5), "text-anchor": "middle", "font-size": 17, "font-weight": 650, fill: ink }, svg); t.textContent = title;
+    if (sub) { const s = svgEl("text", { x: x + w / 2, y: y + h / 2 + 16, "text-anchor": "middle", "font-size": 13, fill: ink2 }, svg); setSub(s, sub); }
+  };
+  const arrow = (d) => svgEl("path", { d, fill: "none", stroke: ink2, "stroke-width": 1.6, "marker-end": "url(#arw)" }, svg);
+  node(30, 40, 190, 70, "Parent program", "execution.py");
+  node(290, 40, 200, 70, "Execute tasks", "in feedback network E_L", true);
+  node(560, 40, 190, 70, "Execution feedback", "batch stats + traces");
+  node(800, 40, 170, 70, "LLM proposer", "writes 2 children");
+  node(560, 215, 190, 70, "Evaluate candidates", "in selection network E_S", true);
+  node(290, 215, 200, 70, "Keep the best", "strict improvement");
+  arrow("M220 75H284"); arrow("M490 75H554"); arrow("M750 75H794");
+  arrow("M885 110V250H756"); arrow("M560 250H496"); arrow("M290 250H125V116");
+  const wifi = (x, y) => { const g = svgEl("g", { transform: `translate(${x},${y})`, stroke: acc, "stroke-width": 2.2, fill: "none", "stroke-linecap": "round" }, svg);
+    svgEl("path", { d: "M-11 0a15 15 0 0 1 22 0M-6 5a8 8 0 0 1 12 0" }, g); svgEl("circle", { cx: 0, cy: 10, r: 2, fill: acc, stroke: "none" }, g); };
+  wifi(470, 32); wifi(730, 207);
+  const note = svgEl("text", { x: 500, y: 168, "text-anchor": "middle", "font-size": 14, fill: ink2 }, svg);
+  note.textContent = "4 generations · 40-task batches · same proposer and budgets in every environment";
+  const n2 = svgEl("text", { x: 30, y: 318, "font-size": 13.5, fill: css("--muted") }, svg);
+  setSub(n2, "Common practice: E_L = E_S = ideal link.   WiSI: Radio-map, Uniform, measured traces or a mixture, set separately for E_L and E_S.");
+}
+
+/* =================================================================== charts */
+const ENV_COLOR = { ideal: "--ideal", radio06: "--radio-1", radio03: "--radio-2", radio01: "--radio-3", uniform: "--uniform", mixed: "--mixed", seed: "--base", hand: "--base-2" };
+const isDark = () => document.documentElement.getAttribute("data-theme") === "dark" ||
+  (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches);
+let mainCol = 3;
+function drawMain() {
+  const M = D.results.main, svg = $("#mainChart"); svg.innerHTML = "";
+  const W = svg.clientWidth || 500, rowH = 27, top = 6, L = 132, R = 44, H = top + M.rows.length * rowH + 24;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const X = v => L + (W - L - R) * v / 100;
+  for (let v = 0; v <= 100; v += 25) {
+    svgEl("line", { x1: X(v), x2: X(v), y1: top, y2: H - 20, stroke: css("--grid") }, svg);
+    const t = svgEl("text", { x: X(v), y: H - 5, "text-anchor": "middle", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = v + "%";
+  }
+  M.rows.forEach((r, i) => {
+    const y = top + i * rowH + 5, v = r[2][mainCol];
+    if (i === 6) svgEl("line", { x1: 0, x2: W, y1: y - 6, y2: y - 6, stroke: css("--grid") }, svg);
+    const lab = svgEl("text", { x: L - 8, y: y + 12, "text-anchor": "end", "font-size": 12.5, fill: i >= 6 ? css("--ink-2") : css("--ink"), "font-weight": i >= 6 ? 400 : 550 }, svg);
+    lab.textContent = r[1] === "ideal" ? "Network-blind" : r[0];
+    svgEl("rect", { x: X(0), y, width: X(v) - X(0), height: 17, rx: 4, fill: css(ENV_COLOR[r[1]]) }, svg);
+    const val = svgEl("text", { x: X(v) + 5, y: y + 12.5, "font-size": 12, "font-weight": 650, fill: css("--ink") }, svg); val.textContent = f1(v);
+    const hit = svgEl("rect", { x: 0, y: y - 5, width: W, height: rowH, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", e => showTip(`<b>${r[1] === "ideal" ? "Improved via a network-blind loop (Ideal link)" : "Improved under " + r[0]}</b><br><span class="m">${M.columns.map((c, k) => `${c === "Ideal" ? "Ideal link" : c === "Worst" ? "Worst case" : "ρ = " + c}: ${f1(r[2][k])}%`).join("<br>")}</span>`, e));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+  const k = $("#mainText");
+  if (mainCol === 3) k.innerHTML = `Task success under congestion (ρ = 0.01): <b>77.2%</b> after Radio-map improvement against <b>40.0%</b> after network-blind improvement (+37.2 pp, [30.3, 43.0]).`;
+  else if (mainCol === 4) k.innerHTML = `Worst case over all four deployment conditions: <b>Mixed</b> improvement is best at <b>77.5%</b>; network-blind improvement reaches 40.0%.`;
+  else if (mainCol === 0) k.innerHTML = `On an ideal link the cost is small: wireless-in-the-loop programs reach 79.0–84.0%, against 82.2% for network-blind ones.`;
+  else k.innerHTML = `The benefit grows with contention: matched Radio-map improvement gains <b>${mainCol === 1 ? "4.6" : "12.0"} pp</b> at ρ = ${M.columns[mainCol]}, and 4.6, 12.0, 37.2 pp at ρ = 0.06, 0.03, 0.01.`;
+}
+(function segMain() {
+  const box = $("#segMain");
+  D.results.main.columns.forEach((c, k) => {
+    const b = document.createElement("button"); b.type = "button";
+    b.textContent = c === "Ideal" ? "Ideal link" : c === "Worst" ? "Worst case" : "ρ = " + c;
+    b.setAttribute("aria-pressed", k === mainCol);
+    b.addEventListener("click", () => { mainCol = k; $$("button", box).forEach((x, j) => x.setAttribute("aria-pressed", j === k)); drawMain(); });
+    box.appendChild(b);
+  });
+})();
+
+const GEN_STYLE = { AR2: ["Network-blind", "--ideal", 1], DR4: ["Radio-map, 0.01", "--radio", 1], DR2: ["Radio-map, 0.06", "--base", 0], DR5: ["Radio-map, 0.03", "--base", 0], CR4: ["Uniform, 0.01", "--base", 0], MixR4: ["Mixed", "--base", 0] };
+function drawGen() {
+  const svg = $("#genChart"); svg.innerHTML = "";
+  const W = svg.clientWidth || 500, H = 236, L = 38, R = 104, T = 10, B = 28;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const X = g => L + (W - L - R) * g / 4, Y = v => T + (H - T - B) * (1 - v / 100);
+  for (let v = 0; v <= 100; v += 25) {
+    svgEl("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg);
+    const t = svgEl("text", { x: L - 7, y: Y(v) + 4, "text-anchor": "end", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = v + "%";
+  }
+  for (let g = 0; g <= 4; g++) { const t = svgEl("text", { x: X(g), y: H - 8, "text-anchor": "middle", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = g === 0 ? "seed" : "gen " + g; }
+  const ends = [];
+  for (const k of ["DR2", "DR5", "CR4", "MixR4", "AR2", "DR4"]) {
+    const st = GEN_STYLE[k], pts = D.results.generations[k].congested, col = css(st[1]);
+    if (st[2]) {
+      let d = ""; pts.forEach((p, i) => d += (i ? "L" : "M") + X(p[0]) + " " + Y(p[3]));
+      for (let i = pts.length - 1; i >= 0; i--) d += "L" + X(pts[i][0]) + " " + Y(pts[i][2]);
+      svgEl("path", { d: d + "Z", fill: col, opacity: .14 }, svg);
+    }
+    let d = ""; pts.forEach((p, i) => d += (i ? "L" : "M") + X(p[0]) + " " + Y(p[1]));
+    svgEl("path", { d, fill: "none", stroke: col, "stroke-width": st[2] ? 2.5 : 1.4, opacity: st[2] ? 1 : .8, "stroke-linejoin": "round" }, svg);
+    pts.forEach(p => svgEl("circle", { cx: X(p[0]), cy: Y(p[1]), r: st[2] ? 4.2 : 2.8, fill: col, stroke: css("--surface"), "stroke-width": 2 }, svg));
+    const last = pts[pts.length - 1]; if (st[2]) ends.push([Y(last[1]), st[0], last[1]]);
+    const hit = svgEl("path", { d, fill: "none", stroke: "transparent", "stroke-width": 14 }, svg);
+    hit.addEventListener("mousemove", e => showTip(`<b>Improved under ${st[0]}</b><br><span class="m">congested success<br>${pts.map(p => `${p[0] ? "gen " + p[0] : "seed"}: ${f1(p[1])}% [${f1(p[2])}, ${f1(p[3])}]`).join("<br>")}</span>`, e));
+    hit.addEventListener("mouseleave", hideTip);
+  }
+  for (const e of ends) { const t = svgEl("text", { x: W - R + 8, y: e[0] + 4, "font-size": 12, "font-weight": 650, fill: css("--ink") }, svg); t.textContent = `${e[1].split(",")[0]} ${f1(e[2])}`; }
+  $("#genLegend").innerHTML = `<span><i class="line" style="background:var(--ideal)"></i>Network-blind (ideal link)</span><span><i class="line" style="background:var(--radio)"></i>Radio-map, ρ = 0.01</span><span><i class="line" style="background:var(--base)"></i>other wireless environments</span>`;
+}
+
+function drawFact() {
+  const svg = $("#factChart"); svg.innerHTML = "";
+  const W = svg.clientWidth || 500, L = W < 420 ? 76 : 92, T = 40, cw = Math.min(190, (W - L - 6) / 2), ch = 86, H = T + 2 * ch + 4;
+  const big = Math.max(18, Math.min(26, cw * 0.15)), small = cw < 170 ? 10.5 : 11.5;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const name = { A: "Ideal", D: "Radio-map" };
+  const t1 = svgEl("text", { x: L + cw, y: 13, "text-anchor": "middle", "font-size": 12.5, "font-weight": 650, fill: css("--ink-2") }, svg); setSub(t1, "Selection network E_S");
+  ["A", "D"].forEach((s, j) => { const t = svgEl("text", { x: L + cw * j + cw / 2, y: 31, "text-anchor": "middle", "font-size": 12, fill: css("--ink-2") }, svg); t.textContent = name[s]; });
+  const t2 = svgEl("text", { x: 12, y: T + ch, "text-anchor": "middle", "font-size": 12.5, "font-weight": 650, fill: css("--ink-2"), transform: `rotate(-90 12 ${T + ch})` }, svg); setSub(t2, "Feedback E_L");
+  ["A", "D"].forEach((f, i) => { const t = svgEl("text", { x: L - 10, y: T + ch * i + ch / 2 + 4, "text-anchor": "end", "font-size": 12, fill: css("--ink-2") }, svg); t.textContent = name[f]; });
+  const dark = isDark();
+  const ramp = dark ? ["#1c3a5e", "#1c5cab", "#2a78d6", "#5598e7"] : ["#cde2fb", "#9ec5f4", "#5598e7", "#1c5cab"];
+  D.results.factorial.forEach(c => {
+    const i = c.feedback === "A" ? 0 : 1, j = c.selection === "A" ? 0 : 1;
+    const q = Math.max(0, Math.min(3, Math.round((c.mean - 40) / 37.3 * 3)));
+    const x = L + cw * j + 3, y = T + ch * i + 3, w = cw - 6, h = ch - 6;
+    svgEl("rect", { x, y, width: w, height: h, rx: 11, fill: ramp[q] }, svg);
+    const ink = (dark || q >= 2) ? "#ffffff" : "#0b0b0b";
+    const v = svgEl("text", { x: x + w / 2, y: y + 14 + big, "text-anchor": "middle", "font-size": big, "font-weight": 700, fill: ink }, svg); v.textContent = f1(c.mean) + "%";
+    const p = D.results.proposals.find(p => p.feedback === c.feedback && p.selection === c.selection);
+    const pr = svgEl("text", { x: x + w / 2, y: y + 34 + big, "text-anchor": "middle", "font-size": small, fill: ink, opacity: .88 }, svg);
+    pr.textContent = cw < 170 ? `${p.compact}/${p.valid} compact` : `${p.compact}/${p.valid} compact proposals`;
+    const hit = svgEl("rect", { x, y, width: w, height: h, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", e => showTip(`<b>E<sub>L</sub> = ${name[c.feedback]}, E<sub>S</sub> = ${name[c.selection]}</b><br><span class="m">Success under congestion: ${f1(c.mean)}% [${f1(c.lo)}, ${f1(c.hi)}]<br>Valid proposals: ${p.valid}; compact: ${p.compact}; compact kept: ${p.kept}</span>`, e));
+    hit.addEventListener("mouseleave", hideTip);
+  });
+}
+
+function drawEcon() {
+  const svg = $("#econChart"); svg.innerHTML = "";
+  const W = svg.clientWidth || 500, H = 236, L = 42, R = 10, T = 10, B = 36;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const XMAX = 5 * Math.ceil(Math.max(...D.results.economy.map(p => p.uploads)) / 5);
+  const X = v => L + (W - L - R) * v / XMAX, Y = v => T + (H - T - B) * (1 - v / 100);
+  for (let v = 0; v <= 100; v += 25) { svgEl("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: css("--grid") }, svg); const t = svgEl("text", { x: L - 7, y: Y(v) + 4, "text-anchor": "end", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = v + "%"; }
+  for (let v = 0; v <= XMAX; v += 5) { const t = svgEl("text", { x: X(v), y: H - 18, "text-anchor": "middle", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = v; }
+  const xl = svgEl("text", { x: L + (W - L - R) / 2, y: H - 2, "text-anchor": "middle", "font-size": 12, fill: css("--ink-2") }, svg); xl.textContent = "uploads per task under congestion";
+  const yt = svgEl("text", { x: L + 4, y: T + 12, "font-size": 12, fill: css("--ink-2") }, svg); yt.textContent = "task success";
+  const lab = { AR2: "a network-blind loop (ideal link)", DR2: "Radio-map, 0.06", DR5: "Radio-map, 0.03", DR4: "Radio-map, 0.01", CR4: "Uniform, 0.01", MixR4: "Mixed" };
+  const pts = D.results.economy.slice().sort((a, b) => (a.env === "AR2") - (b.env === "AR2"));
+  for (const p of pts) {
+    const col = css(p.env === "AR2" ? "--ideal" : "--radio");
+    svgEl("circle", { cx: X(p.uploads), cy: Y(p.cong), r: 5, fill: col, stroke: css("--surface"), "stroke-width": 2, opacity: .92 }, svg);
+    const hit = svgEl("circle", { cx: X(p.uploads), cy: Y(p.cong), r: 12, fill: "transparent" }, svg);
+    hit.addEventListener("mousemove", e => showTip(`<b>Improved ${p.env === "AR2" ? "via" : "under"} ${lab[p.env]}</b> <span class="m">(${p.model === "sol" ? "second proposer" : "primary proposer"})</span><br><span class="m">${p.uploads.toFixed(1)} uploads and ${p.timeouts.toFixed(1)} timeouts per task<br>success: ${f1(p.cong)}% congested, ${f1(p.ideal)}% ideal link</span>`, e));
+    hit.addEventListener("mouseleave", hideTip);
+  }
+}
+
+let sweepK = "Full frame";
+function drawSweep() {
+  const svg = $("#sweepChart"); svg.innerHTML = "";
+  const W = svg.clientWidth || 500, L = 44, T = 6, B = 34, cw = (W - L - 4) / 4, ch = 44, H = T + 3 * ch + B;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("height", H);
+  const dark = isDark();
+  const base = dark ? [38, 38, 36] : [247, 246, 243], hot = dark ? [230, 103, 103] : [176, 38, 38];
+  const col = v => { const q = Math.min(1, Math.abs(v) / 40); return `rgb(${base.map((b, k) => Math.round(b + (hot[k] - b) * q)).join(",")})`; };
+  const rhos = [0.01, 0.03, 0.06, 0.12], dls = [20, 40, 60];
+  dls.forEach((dl, i) => {
+    const l = svgEl("text", { x: L - 8, y: T + ch * i + ch / 2 + 4, "text-anchor": "end", "font-size": 11.5, fill: css("--muted") }, svg); l.textContent = dl + " s";
+    rhos.forEach((rho, j) => {
+      const c = D.results.sweep.find(s => s.strategy === sweepK && s.deadline === dl && Math.abs(s.rho - rho) < 1e-9);
+      const x = L + cw * j + 2, y = T + ch * i + 2, q = Math.abs(c.diff) / 40;
+      svgEl("rect", { x, y, width: cw - 4, height: ch - 4, rx: 6, fill: col(c.diff), stroke: css("--ring") }, svg);
+      const ink = q > 0.45 ? "#ffffff" : css("--ink");
+      const v = svgEl("text", { x: x + (cw - 4) / 2, y: y + (ch - 4) / 2 + 5, "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: ink }, svg); v.textContent = (c.diff > 0 ? "+" : "") + Math.round(c.diff);
+      const hit = svgEl("rect", { x, y, width: cw - 4, height: ch - 4, fill: "transparent" }, svg);
+      hit.addEventListener("mousemove", e => showTip(`<b>${sweepK}</b>, deadline ${dl} s, ρ = ${rho}<br><span class="m">Radio-map minus Ideal: ${Math.round(c.diff)} pp [${Math.round(c.lo)}, ${Math.round(c.hi)}]</span>`, e));
+      hit.addEventListener("mouseleave", hideTip);
+    });
+  });
+  rhos.forEach((rho, j) => { const t = svgEl("text", { x: L + cw * j + cw / 2, y: T + 3 * ch + 14, "text-anchor": "middle", "font-size": 11.5, fill: css("--muted") }, svg); t.textContent = "ρ = " + rho; });
+  const xl = svgEl("text", { x: L + (W - L) / 2, y: H - 3, "text-anchor": "middle", "font-size": 12, fill: css("--ink-2") }, svg); xl.textContent = "Radio-map minus Ideal success (pp), by deadline and airtime share";
+  const worst = Math.min(...D.results.sweep.filter(s => s.strategy === sweepK && s.rho === 0.01).map(s => s.diff));
+  const desc = { "Full frame": "sends the whole high-resolution frame", "Always crop": "sends a crop around the detected target", "Deferred upload": "sends a crop after waiting for a stronger RSSI", "Local first": "answers on-device and sends a crop when unsure" };
+  $("#sweepText").innerHTML = `Hand-designed strategies with no self-improvement. <i>${sweepK}</i> ${desc[sweepK]} and loses up to <b>${Math.abs(Math.round(worst))} pp</b> under severe congestion; full frames lose 26–37 pp, compact uploads 4–11 pp.`;
+}
+(function segSweep() {
+  const box = $("#segSweep");
+  ["Full frame", "Always crop", "Deferred upload", "Local first"].forEach(k => {
+    const b = document.createElement("button"); b.type = "button"; b.textContent = k; b.setAttribute("aria-pressed", k === sweepK);
+    b.addEventListener("click", () => { sweepK = k; $$("button", box).forEach(x => x.setAttribute("aria-pressed", x === b)); drawSweep(); });
+    box.appendChild(b);
+  });
+})();
+
+function drawCharts() { drawLoop(); drawMain(); drawGen(); drawFact(); drawEcon(); drawSweep(); }
+drawCharts();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawCharts);
+
+$("#copyBib").addEventListener("click", async () => {
+  const txt = $("#bib").textContent.replace(/^Copy/, "").trim();
+  try { await navigator.clipboard.writeText(txt); $("#copyBib").textContent = "Copied"; } catch (e) { $("#copyBib").textContent = "Select and copy"; }
+  setTimeout(() => $("#copyBib").textContent = "Copy", 1600);
+});
+</script>
+</body>
+</html>

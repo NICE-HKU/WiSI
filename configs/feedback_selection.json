@@ -1,0 +1,14 @@
+{
+  "description": "2x2 feedback-vs-selection study, off-diagonal cells. Each environment is [selection cond, regime, feedback (logs) cond, regime]; the diagonal cells are A:R2 and D:R4 of improvement.json.",
+  "model": "gpt-6.1-terra",
+  "prices": {"input_per_1M": 1.00, "cached_input_per_1M": 0.05, "output_per_1M": 5.00},
+  "hard_cost_cap_usd": 20.0,
+  "seed_agent": "m1_full_frame",
+  "config": "configs/multi_item.yaml",
+  "training_environments": [["D", "R4", "A", "R2"], ["A", "R2", "D", "R4"]],
+  "lineages_per_environment": 8,
+  "generations": 4,
+  "children_per_generation": 2,
+  "repair_attempts_per_proposal": 1,
+  "batch_size": 40
+}
