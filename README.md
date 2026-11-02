@@ -142,11 +142,11 @@ python scripts/run_study.py --plan configs/feedback_selection.json --out outputs
 
 Each lineage directory keeps every prompt, raw LLM response, validation result, evaluation score and selection decision (`lineage.jsonl`, `prompts/`), together with every valid candidate program (`g<generation>c<child>/`) and the final parent (`final_parent.txt`).
 
-This release does not include the scripts for the real-VLM check, the measured-trace improvement study, the held-out-house audit or the parameter-search baseline. The simulator supports the corresponding conditions.
+The experiment scripts cover fixed-program evaluation, load-by-deadline sweeps, LLM-driven improvement, and feedback-versus-selection studies. The simulator also supports measured LTE trace channels and link-observation ablations.
 
 ## Project page
 
-The project page at <https://nice-hku.github.io/WiSI/> is the static site in `docs/` (`index.html`, no build step or external libraries), served by GitHub Pages from the `main` branch, folder `/docs`. To view it locally, open `docs/index.html` in a browser. When the paper is public, set its URL in the `LINKS` constant near the top of the page script. The replay on the page is regenerated with this simulator from the two archived lineage-6 final programs in `docs/programs/`.
+The project page at <https://nice-hku.github.io/WiSI/> presents interactive task replays, experimental findings, and real-VLM examples. It is a static site in `docs/`, served by GitHub Pages from the `main` branch, folder `/docs`. To view it locally, open `docs/index.html` in a browser. The replay on the page is regenerated with this simulator from the two archived lineage-6 final programs in `docs/programs/`.
 
 ## Data and licenses
 
