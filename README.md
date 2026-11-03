@@ -4,7 +4,9 @@
 
 Code for the paper *WiSI: Wireless-in-the-Loop Self-Improvement* (Zongxi Liu and Hongyang Du, The University of Hong Kong).
 
-> **See it first:** the [project page](https://nice-hku.github.io/WiSI/) replays the same task step by step: the seed program on an ideal and a congested link, programs improved via a network-blind loop and via WiSI, a measured LTE trace, an unseen house, and a real vision-language model.
+[![WiSI video: two evolved programs under the same congestion](docs/assets/video/wisi-poster.jpg)](https://nice-hku.github.io/WiSI/#video)
+
+**[Watch the video · 2:21](https://nice-hku.github.io/WiSI/#video)**
 
 An embodied agent's program is improved by a large language model (LLM): the LLM reads the program and its execution feedback, writes candidate programs, and the candidates are kept or discarded by evaluating them on tasks. WiSI places the wireless link inside this loop. Agents move through indoor houses, perceive with an on-device model or upload camera frames to an edge server over a spatiotemporal wireless channel, and must answer before a deadline. The network that produces the **feedback** (E_L) and the network that **selects** candidates (E_S) can be set independently.
 
@@ -146,7 +148,7 @@ The experiment scripts cover fixed-program evaluation, load-by-deadline sweeps, 
 
 ## Project page
 
-The project page at <https://nice-hku.github.io/WiSI/> presents interactive task replays, experimental findings, and real-VLM examples. It is a static site in `docs/`, served by GitHub Pages from the `main` branch, folder `/docs`. To view it locally, open `docs/index.html` in a browser. The replay on the page is regenerated with this simulator from the two archived lineage-6 final programs in `docs/programs/`.
+The project page at <https://nice-hku.github.io/WiSI/> opens with a video overview, followed by the method and experimental findings. Expand **Explore interactively** below the video to step through task replays and real-VLM examples. It is a static site in `docs/`, served by GitHub Pages from the `main` branch, folder `/docs`. To view it locally, open `docs/index.html` in a browser. The replay on the page is regenerated with this simulator from the two archived lineage-6 final programs in `docs/programs/`.
 
 ## Data and licenses
 

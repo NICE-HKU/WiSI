@@ -38,6 +38,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
+section[id],#interactive{scroll-margin-top:72px}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--accent)}
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
@@ -78,6 +79,29 @@ h2{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-.015em;margin
 h3{font-size:21px;line-height:1.3;margin:0 0 6px;letter-spacing:-.005em}
 .sub{color:var(--ink-2);max-width:760px;font-size:17px;margin:0}
 .card{background:var(--surface);border:1px solid var(--ring);border-radius:16px;box-shadow:var(--shadow)}
+
+/* video & interactive examples */
+#video{padding-top:56px}
+.video-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
+.video-head h2{margin:0}
+.video-duration{color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.video-frame{margin-top:22px;background:#030819;border:1px solid #1d2a3c;border-radius:18px;overflow:hidden;box-shadow:var(--shadow)}
+.video-frame video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain}
+.video-frame video:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+.interactive{margin-top:8px;border-top:1px solid var(--ring);border-bottom:1px solid var(--ring)}
+.interactive>summary{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 0;cursor:pointer;list-style:none}
+.interactive>summary::-webkit-details-marker{display:none}
+.interactive>summary strong{display:block;font-size:18px;font-weight:600}
+.interactive>summary small{display:block;margin-top:3px;color:var(--ink-2);font-size:14px;line-height:1.5}
+.interactive>summary svg{flex:none;color:var(--accent);transition:transform .2s}
+.interactive[open]>summary svg{transform:rotate(180deg)}
+.interactive>summary:hover strong{color:var(--accent)}
+.interactive>summary:focus-visible{outline:2px solid var(--accent);outline-offset:5px;border-radius:4px}
+.interactive section{padding-top:32px}
+.interactive section>.wrap{padding:0}
+.interactive #validation{padding-top:48px}
+.interactive h2{font-size:clamp(24px,3.5vw,32px)}
+
 .fgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:32px}
 @media (max-width:900px){.fgrid{grid-template-columns:1fr}}
 .fcard{padding:20px 20px 16px;display:flex;flex-direction:column;gap:10px}
@@ -240,7 +264,7 @@ footer{padding:60px 0 50px;color:var(--muted);font-size:14px}
   <div class="wrap">
     <a class="brand" href="#top">WiSI</a>
     <div class="links">
-      <a href="#replay">Replay</a><a href="#validation">Validation</a><a href="#idea">Idea</a><a href="#findings">Findings</a><a href="#takeaways">Takeaways</a><a href="#code">Code</a><a href="#cite">Cite</a>
+      <a href="#video">Video</a><a href="#interactive">Interactive</a><a href="#idea">Idea</a><a href="#findings">Findings</a><a href="#takeaways">Takeaways</a><a href="#code">Code</a><a href="#cite">Cite</a>
     </div>
     <button id="themeBtn" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
@@ -262,13 +286,31 @@ footer{padding:60px 0 50px;color:var(--muted);font-size:14px}
       <a class="btn" id="codeLink" href="https://github.com/NICE-HKU/WiSI">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.2 18 4.5 18 4.5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
         <span>Code</span></a>
-      <a class="btn" href="#replay">▶ Watch the replay</a>
+      <a class="btn" href="#video">▶ Watch video</a>
       <a class="btn" href="#cite">BibTeX</a>
     </div>
   </div>
 </header>
 
 <main>
+<section id="video" aria-labelledby="videoTitle">
+  <div class="wrap">
+    <div class="video-head"><h2 id="videoTitle">WiSI in action</h2><span class="video-duration">2:21</span></div>
+    <div class="video-frame">
+      <video id="overviewVideo" controls playsinline preload="none" poster="assets/video/wisi-poster.jpg" width="1920" height="1080" aria-label="WiSI video overview">
+        <source src="assets/video/wisi.mp4" type="video/mp4">
+        <a href="assets/video/wisi.mp4">Watch the WiSI video</a>.
+      </video>
+    </div>
+  </div>
+</section>
+
+<div class="wrap">
+<details class="interactive" id="interactive">
+  <summary>
+    <span><strong>Explore interactively</strong><small>Step through each scenario and inspect individual uploads.</small></span>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+  </summary>
 <section id="replay">
   <div class="wrap">
     <div class="kicker">See it</div>
@@ -290,6 +332,9 @@ footer{padding:60px 0 50px;color:var(--muted);font-size:14px}
     <p class="prov" id="t2prov"></p>
   </div>
 </section>
+
+</details>
+</div>
 
 <section id="idea">
   <div class="wrap">
@@ -875,6 +920,7 @@ class Theater {
     const P = this.player; P.playing = on;
     $(".pbtn", this.root).innerHTML = on ? PAUSE : PLAY; $(".pbtn", this.root).setAttribute("aria-label", on ? "Pause" : "Play");
     if (!on) return;
+    $("#overviewVideo").pause();
     P.started = true; $(".start", this.root).hidden = true;
     if (P.t >= this.tmax) P.t = 0;
     P.last = performance.now();
@@ -924,9 +970,28 @@ function buildVlm(box) {
 }
 function n2(k) { return VLM_PAYLOADS.find(p => p[0] === k)[1].toLowerCase(); }
 
-new Theater("t1", CASES1, 1);
-new Theater("t2", CASES2, 0);
-let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { THEATERS.forEach(t => t.resize()); drawCharts(); }, 120); });
+const interactive = $("#interactive");
+function showInteractive() {
+  if (!THEATERS.length) {
+    new Theater("t1", CASES1, 1);
+    new Theater("t2", CASES2, 0);
+  } else THEATERS.forEach(t => t.resize());
+}
+interactive.addEventListener("toggle", () => {
+  if (interactive.open) showInteractive();
+  else THEATERS.forEach(t => t.play(false));
+});
+$("#overviewVideo").addEventListener("play", () => THEATERS.forEach(t => t.play(false)));
+function openInteractiveAnchor(hash = location.hash) {
+  if (!["#interactive", "#replay", "#validation"].includes(hash)) return;
+  interactive.open = true;
+  showInteractive();
+  requestAnimationFrame(() => $(hash).scrollIntoView({ block: "start" }));
+}
+addEventListener("hashchange", () => openInteractiveAnchor());
+$("a[href='#interactive']").addEventListener("click", () => openInteractiveAnchor("#interactive"));
+openInteractiveAnchor();
+let rsz; addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { if (interactive.open) THEATERS.forEach(t => t.resize()); drawCharts(); }, 120); });
 
 /* =================================================================== method loop */
 function drawLoop() {
