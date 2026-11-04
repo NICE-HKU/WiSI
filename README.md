@@ -1,6 +1,6 @@
 # WiSI: Wireless-in-the-Loop Self-Improvement
 
-**[Project page](https://nice-hku.github.io/WiSI/)** · Paper (coming soon) · [Citation](#citation)
+**[Project page](https://nice-hku.github.io/WiSI/)** · [Paper](https://arxiv.org/abs/2611.04437) · [Citation](#citation)
 
 Code for the paper *WiSI: Wireless-in-the-Loop Self-Improvement* (Zongxi Liu and Hongyang Du, The University of Hong Kong).
 
@@ -160,7 +160,8 @@ The code is released under the MIT License (`LICENSE`). The ProcTHOR-10k houses 
 @article{liu2026wisi,
   title   = {{WiSI}: Wireless-in-the-Loop Self-Improvement},
   author  = {Liu, Zongxi and Du, Hongyang},
+  journal = {arXiv preprint arXiv:2611.04437},
   year    = {2026},
-  note    = {Under review}
+  url     = {https://arxiv.org/abs/2611.04437}
 }
 ```

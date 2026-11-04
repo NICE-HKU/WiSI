@@ -280,9 +280,9 @@ footer{padding:60px 0 50px;color:var(--muted);font-size:14px}
     <p class="lead">Embodied agents can now rewrite their own programs from execution feedback. But the wireless link decides what that feedback shows and which rewrites pass the test. WiSI puts the network inside the improvement loop, and the agents that come out learn to communicate differently.</p>
     <div class="authors">Zongxi Liu &nbsp;·&nbsp; Hongyang Du<sup>*</sup><small>Department of Electrical and Computer Engineering, The University of Hong Kong</small></div>
     <div class="btns">
-      <a class="btn primary" id="paperLink" aria-disabled="true">
+      <a class="btn primary" id="paperLink" href="https://arxiv.org/abs/2611.04437">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6"/></svg>
-        <span>Paper (coming soon)</span></a>
+        <span>Paper</span></a>
       <a class="btn" id="codeLink" href="https://github.com/NICE-HKU/WiSI">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5a12 12 0 0 0-3.8 23.4c.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.6-1.4-1.4-1.8-1.4-1.8-1.1-.8.1-.7.1-.7 1.2.1 1.9 1.3 1.9 1.3 1.1 1.9 2.9 1.3 3.6 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17 4.2 18 4.5 18 4.5c.7 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0 0 12 .5z"/></svg>
         <span>Code</span></a>
@@ -442,7 +442,9 @@ python scripts/audit_study.py outputs/study</pre>
 <pre class="block" id="bib"><button class="copy" id="copyBib" type="button">Copy</button>@article{liu2026wisi,
   title   = {{WiSI}: Wireless-in-the-Loop Self-Improvement},
   author  = {Liu, Zongxi and Du, Hongyang},
-  year    = {2026}
+  journal = {arXiv preprint arXiv:2611.04437},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2611.04437}
 }</pre>
   </div>
 </section>
@@ -454,7 +456,7 @@ python scripts/audit_study.py outputs/study</pre>
 <script src="data/page_data.js"></script>
 <script>
 "use strict";
-const LINKS = { paper: "", code: "https://github.com/NICE-HKU/WiSI" };
+const LINKS = { paper: "https://arxiv.org/abs/2611.04437", code: "https://github.com/NICE-HKU/WiSI" };
 
 const D = window.WISI_DATA;
 const $ = (s, r = document) => r.querySelector(s);
@@ -480,8 +482,7 @@ const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).
 const f1 = v => (Math.round(v * 10) / 10).toFixed(1);
 
 /* ---------------- links & theme ---------------- */
-if (LINKS.paper) { const a = $("#paperLink"); a.href = LINKS.paper; a.removeAttribute("aria-disabled"); $("span", a).textContent = "Paper"; }
-else $("#paperLink span").textContent = "Paper (coming soon)";
+$("#paperLink").href = LINKS.paper;
 if (LINKS.code) $("#codeLink").href = LINKS.code;
 (function theme() {
   let saved = null;
